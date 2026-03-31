@@ -11,6 +11,7 @@ input, textarea, select, button {
   border-radius:8px; border:none;
 }
 button { background:#1e88e5; color:white; font-weight:bold; }
+h3 { margin-top:20px; }
 </style>
 </head>
 
@@ -18,7 +19,21 @@ button { background:#1e88e5; color:white; font-weight:bold; }
 
 <h2>🪖 TIME IN TIME</h2>
 
-<input id="id" placeholder="ID do incidente">
+<!-- INICIAR -->
+<h3>📋 Iniciar Incidente</h3>
+
+<input id="local" placeholder="Capturando localização..." readonly>
+<input id="ocorrencia" placeholder="Ocorrência">
+<input id="responsavel" placeholder="Responsável">
+
+<button id="btnIniciar" onclick="iniciar()">Iniciar</button>
+
+<hr>
+
+<!-- EVENTOS -->
+<h3>⏱️ Eventos</h3>
+
+<input id="id" placeholder="ID" readonly>
 
 <textarea id="descricao" placeholder="Descrição"></textarea>
 
@@ -34,23 +49,52 @@ button { background:#1e88e5; color:white; font-weight:bold; }
 <textarea id="pos" placeholder="Positivos"></textarea>
 <textarea id="neg" placeholder="Negativos"></textarea>
 
-<button onclick="enviar()">Registrar</button>
+<button onclick="registrar()">Registrar Evento</button>
+
+<hr>
+
+<!-- FINALIZAR -->
+<h3>🏁 Finalizar</h3>
+
+<input id="idFinalizar" readonly>
+<button onclick="finalizar()">Finalizar</button>
 
 <p id="status"></p>
 
 <script>
 
-let lat = "", lng = "";
+let lat="", lng="";
+let incidenteId="";
 
+// GPS
 navigator.geolocation.getCurrentPosition(pos=>{
   lat = pos.coords.latitude;
   lng = pos.coords.longitude;
+  document.getElementById("local").value =
+    lat.toFixed(6)+", "+lng.toFixed(6);
 });
 
-function enviar(){
+// INICIAR
+function iniciar(){
+
+  incidenteId = Date.now();
+
+  document.getElementById("id").value = incidenteId;
+  document.getElementById("idFinalizar").value = incidenteId;
+
+  document.getElementById("btnIniciar").disabled = true;
+  document.getElementById("ocorrencia").disabled = true;
+  document.getElementById("responsavel").disabled = true;
+
+  document.getElementById("status").innerText =
+    "Incidente iniciado | ID: "+incidenteId;
+}
+
+// REGISTRAR
+function registrar(){
 
   let dados = {
-    id: document.getElementById("id").value,
+    id: incidenteId,
     descricao: document.getElementById("descricao").value,
     emc: document.getElementById("emc").value,
     positivos: document.getElementById("pos").value,
@@ -59,18 +103,31 @@ function enviar(){
     longitude: lng
   };
 
-  fetch("COLE_SEU_LINK_AQUI", {
-    method: "POST",
+  fetch("COLE_SEU_LINK_DO_APPS_SCRIPT_AQUI", {
+    method:"POST",
     body: JSON.stringify(dados)
-  })
-  .then(()=> {
-    document.getElementById("status").innerText = "✅ Enviado";
-    
-    document.getElementById("descricao").value = "";
-    document.getElementById("pos").value = "";
-    document.getElementById("neg").value = "";
-    document.getElementById("emc").value = "";
+  }).then(()=>{
+
+    document.getElementById("descricao").value="";
+    document.getElementById("pos").value="";
+    document.getElementById("neg").value="";
+    document.getElementById("emc").value="";
+
+    document.getElementById("status").innerText =
+      "Evento registrado";
   });
+}
+
+// FINALIZAR
+function finalizar(){
+
+  document.getElementById("btnIniciar").disabled=false;
+
+  document.getElementById("id").value="";
+  document.getElementById("idFinalizar").value="";
+
+  document.getElementById("status").innerText =
+    "Incidente finalizado";
 }
 
 </script>
