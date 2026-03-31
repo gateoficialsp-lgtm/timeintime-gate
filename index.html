@@ -11,6 +11,7 @@ input, textarea, select, button {
   border-radius:8px; border:none;
 }
 button { background:#1e88e5; color:white; font-weight:bold; }
+button:disabled { background:#555; }
 h3 { margin-top:20px; }
 </style>
 </head>
@@ -63,19 +64,29 @@ h3 { margin-top:20px; }
 
 <script>
 
-let lat="", lng="";
-let incidenteId="";
+let lat = "", lng = "";
+let incidenteId = "";
 
-// GPS
+// 📍 GPS
 navigator.geolocation.getCurrentPosition(pos=>{
   lat = pos.coords.latitude;
   lng = pos.coords.longitude;
+
   document.getElementById("local").value =
-    lat.toFixed(6)+", "+lng.toFixed(6);
+    lat.toFixed(6) + ", " + lng.toFixed(6);
+
+}, ()=>{
+  document.getElementById("local").value = "Localização indisponível";
 });
 
-// INICIAR
+// 🚀 INICIAR INCIDENTE
 function iniciar(){
+
+  if(!document.getElementById("ocorrencia").value ||
+     !document.getElementById("responsavel").value){
+    alert("Preencha ocorrência e responsável");
+    return;
+  }
 
   incidenteId = Date.now();
 
@@ -87,11 +98,16 @@ function iniciar(){
   document.getElementById("responsavel").disabled = true;
 
   document.getElementById("status").innerText =
-    "Incidente iniciado | ID: "+incidenteId;
+    "✅ Incidente iniciado | ID: " + incidenteId;
 }
 
-// REGISTRAR
+// 📝 REGISTRAR EVENTO
 function registrar(){
+
+  if(!incidenteId){
+    alert("Inicie o incidente primeiro");
+    return;
+  }
 
   let dados = {
     id: incidenteId,
@@ -103,34 +119,56 @@ function registrar(){
     longitude: lng
   };
 
- fetch("https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec", {
-  method: "POST",
-  headers: {
-    "Content-Type": "text/plain;charset=utf-8"
-  },
-  body: JSON.stringify(dados)
-})
+  fetch("https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec", {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify(dados)
+  })
+  .then(response => response.text())
+  .then(() => {
 
-    document.getElementById("descricao").value="";
-    document.getElementById("pos").value="";
-    document.getElementById("neg").value="";
-    document.getElementById("emc").value="";
+    // limpa campos
+    document.getElementById("descricao").value = "";
+    document.getElementById("pos").value = "";
+    document.getElementById("neg").value = "";
+    document.getElementById("emc").value = "";
 
     document.getElementById("status").innerText =
-      "Evento registrado";
+      "✅ Evento registrado";
+
+  })
+  .catch(err => {
+    console.error(err);
+    document.getElementById("status").innerText =
+      "❌ Erro ao enviar";
   });
 }
 
-// FINALIZAR
+// 🏁 FINALIZAR INCIDENTE
 function finalizar(){
 
-  document.getElementById("btnIniciar").disabled=false;
+  if(!incidenteId){
+    alert("Nenhum incidente ativo");
+    return;
+  }
 
-  document.getElementById("id").value="";
-  document.getElementById("idFinalizar").value="";
+  document.getElementById("btnIniciar").disabled = false;
+  document.getElementById("ocorrencia").disabled = false;
+  document.getElementById("responsavel").disabled = false;
+
+  document.getElementById("id").value = "";
+  document.getElementById("idFinalizar").value = "";
+  document.getElementById("descricao").value = "";
+  document.getElementById("pos").value = "";
+  document.getElementById("neg").value = "";
+  document.getElementById("emc").value = "";
+
+  incidenteId = "";
 
   document.getElementById("status").innerText =
-    "Incidente finalizado";
+    "🏁 Incidente finalizado";
 }
 
 </script>
