@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Time In Time</title>
+
+<style>
+body { font-family: Arial; padding:20px; background:#111; color:#fff; }
+input, textarea, select, button {
+  width:100%; margin:5px 0; padding:12px;
+  border-radius:8px; border:none;
+}
+button { background:#1e88e5; color:white; font-weight:bold; }
+</style>
+</head>
+
+<body>
+
+<h2>🪖 TIME IN TIME</h2>
+
+<input id="id" placeholder="ID do incidente">
+
+<textarea id="descricao" placeholder="Descrição"></textarea>
+
+<select id="emc">
+  <option value="">EMC (opcional)</option>
+  <option value="01">Escuta Ativa</option>
+  <option value="02">Empatia</option>
+  <option value="03">Rapport</option>
+  <option value="04">Influência</option>
+  <option value="05">Mudança</option>
+</select>
+
+<textarea id="pos" placeholder="Positivos"></textarea>
+<textarea id="neg" placeholder="Negativos"></textarea>
+
+<button onclick="enviar()">Registrar</button>
+
+<p id="status"></p>
+
+<script>
+
+let lat = "", lng = "";
+
+navigator.geolocation.getCurrentPosition(pos=>{
+  lat = pos.coords.latitude;
+  lng = pos.coords.longitude;
+});
+
+function enviar(){
+
+  let dados = {
+    id: document.getElementById("id").value,
+    descricao: document.getElementById("descricao").value,
+    emc: document.getElementById("emc").value,
+    positivos: document.getElementById("pos").value,
+    negativos: document.getElementById("neg").value,
+    latitude: lat,
+    longitude: lng
+  };
+
+  fetch("COLE_SEU_LINK_AQUI", {
+    method: "POST",
+    body: JSON.stringify(dados)
+  })
+  .then(()=> {
+    document.getElementById("status").innerText = "✅ Enviado";
+    
+    document.getElementById("descricao").value = "";
+    document.getElementById("pos").value = "";
+    document.getElementById("neg").value = "";
+    document.getElementById("emc").value = "";
+  });
+}
+
+</script>
+
+</body>
+</html>
