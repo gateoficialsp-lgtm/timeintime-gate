@@ -20,6 +20,7 @@ h3 { margin-top:20px; }
 
 <h2>🪖 TIME IN TIME</h2>
 
+<!-- INICIAR -->
 <h3>📋 Iniciar Incidente</h3>
 
 <input id="local" placeholder="Capturando localização..." readonly>
@@ -30,6 +31,7 @@ h3 { margin-top:20px; }
 
 <hr>
 
+<!-- EVENTOS -->
 <h3>⏱️ Eventos</h3>
 
 <input id="id" readonly>
@@ -52,6 +54,7 @@ h3 { margin-top:20px; }
 
 <hr>
 
+<!-- FINALIZAR -->
 <h3>🏁 Finalizar</h3>
 
 <input id="idFinalizar" readonly>
@@ -61,11 +64,13 @@ h3 { margin-top:20px; }
 
 <script>
 
+const API_URL = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+
 let lat = "";
 let lng = "";
 let incidenteId = "";
 
-// GPS
+// 📍 GPS
 navigator.geolocation.getCurrentPosition(
   function(pos){
     lat = pos.coords.latitude;
@@ -79,7 +84,7 @@ navigator.geolocation.getCurrentPosition(
   }
 );
 
-// INICIAR
+// 🚀 INICIAR INCIDENTE
 function iniciar(){
 
   if(!document.getElementById("ocorrencia").value ||
@@ -97,11 +102,26 @@ function iniciar(){
   document.getElementById("ocorrencia").disabled = true;
   document.getElementById("responsavel").disabled = true;
 
+  // 🔥 ENVIA PARA INCIDENTES
+  fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      tipo: "inicio",
+      id: incidenteId,
+      local: document.getElementById("local").value,
+      ocorrencia: document.getElementById("ocorrencia").value,
+      responsavel: document.getElementById("responsavel").value
+    })
+  });
+
   document.getElementById("status").innerText =
-    "Incidente iniciado | ID: " + incidenteId;
+    "✅ Incidente iniciado | ID: " + incidenteId;
 }
 
-// REGISTRAR
+// 📝 REGISTRAR EVENTO
 function registrar(){
 
   if(!incidenteId){
@@ -110,6 +130,7 @@ function registrar(){
   }
 
   let dados = {
+    tipo: "evento",
     id: incidenteId,
     descricao: document.getElementById("descricao").value,
     emc: document.getElementById("emc").value,
@@ -119,40 +140,48 @@ function registrar(){
     longitude: lng
   };
 
-  fetch("https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec", {
+  fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "text/plain;charset=utf-8"
     },
     body: JSON.stringify(dados)
   })
-  .then(function(response){
-    return response.text();
-  })
   .then(function(){
-
     document.getElementById("descricao").value = "";
     document.getElementById("pos").value = "";
     document.getElementById("neg").value = "";
     document.getElementById("emc").value = "";
 
     document.getElementById("status").innerText =
-      "Evento registrado";
+      "✅ Evento registrado";
   })
   .catch(function(err){
     console.error(err);
     document.getElementById("status").innerText =
-      "Erro ao enviar";
+      "❌ Erro ao enviar";
   });
 }
 
-// FINALIZAR
+// 🏁 FINALIZAR INCIDENTE
 function finalizar(){
 
   if(!incidenteId){
     alert("Nenhum incidente ativo");
     return;
   }
+
+  // 🔥 ENVIA FINALIZAÇÃO
+  fetch(API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    },
+    body: JSON.stringify({
+      tipo: "fim",
+      id: incidenteId
+    })
+  });
 
   document.getElementById("btnIniciar").disabled = false;
   document.getElementById("ocorrencia").disabled = false;
@@ -168,7 +197,7 @@ function finalizar(){
   incidenteId = "";
 
   document.getElementById("status").innerText =
-    "Incidente finalizado";
+    "🏁 Incidente finalizado";
 }
 
 </script>
