@@ -10,9 +10,11 @@ input, textarea, select, button {
   width:100%; margin:5px 0; padding:12px;
   border-radius:8px; border:none;
 }
+textarea { height:150px; }
 button { background:#1e88e5; color:white; font-weight:bold; }
 button:disabled { background:#555; }
 h3 { margin-top:20px; }
+label { display:block; margin-top:10px; }
 </style>
 </head>
 
@@ -24,7 +26,17 @@ h3 { margin-top:20px; }
 <h3>📋 Iniciar Incidente</h3>
 
 <input id="local" placeholder="Capturando localização..." readonly>
-<input id="ocorrencia" placeholder="Ocorrência">
+
+<select id="ocorrencia">
+  <option value="">Selecione ocorrência</option>
+  <option value="PPS">PPS - Pessoa com Propósito Suicida</option>
+  <option value="REF">REF - Refém</option>
+  <option value="CRE">CRE - Criminoso Embarricado</option>
+  <option value="MAR">MAR - Mandado de alto risco</option>
+</select>
+
+<input id="unidade" placeholder="Unidade (ex: 4º BPChq, 9º BPM/M)">
+
 <input id="responsavel" placeholder="Responsável">
 
 <button id="btnIniciar" onclick="iniciar()">Iniciar</button>
@@ -34,9 +46,9 @@ h3 { margin-top:20px; }
 <!-- EVENTOS -->
 <h3>⏱️ Eventos</h3>
 
-<input id="id" readonly>
+<input id="id" placeholder="ID do incidente">
 
-<textarea id="descricao" placeholder="Descrição"></textarea>
+<textarea id="descricao" placeholder="Descrição detalhada"></textarea>
 
 <select id="emc">
   <option value="">EMC (opcional)</option>
@@ -47,8 +59,36 @@ h3 { margin-top:20px; }
   <option value="05">Mudança</option>
 </select>
 
-<textarea id="pos" placeholder="Positivos"></textarea>
-<textarea id="neg" placeholder="Negativos"></textarea>
+<label>
+  <input type="checkbox" id="negociacao" checked>
+  Negociação Real
+</label>
+
+<label>
+  <input type="checkbox" id="pausa">
+  Pausa estratégica
+</label>
+
+<select id="indicadorProgresso">
+  <option value="">Indicador de Progresso</option>
+  <option>Tom de voz mais baixo e aberto ao diálogo</option>
+  <option>Comportamento mais ameno</option>
+  <option>Não agride nem atira</option>
+  <option>Ouve conselhos</option>
+  <option>Vínculo com negociador</option>
+</select>
+
+<select id="indicadorViolencia">
+  <option value="">Indicador de Violência</option>
+  <option>Tom de voz alto e imperativo</option>
+  <option>Comportamento agressivo</option>
+  <option>Agride ou atira</option>
+  <option>Ameaça se matar</option>
+  <option>Mata reféns</option>
+</select>
+
+<textarea id="pos" placeholder="Fatores de proteção"></textarea>
+<textarea id="neg" placeholder="Fatores de risco"></textarea>
 
 <button onclick="registrar()">Registrar Evento</button>
 
@@ -57,7 +97,7 @@ h3 { margin-top:20px; }
 <!-- FINALIZAR -->
 <h3>🏁 Finalizar</h3>
 
-<input id="idFinalizar" readonly>
+<input id="idFinalizar">
 <button onclick="finalizar()">Finalizar</button>
 
 <p id="status"></p>
@@ -66,11 +106,9 @@ h3 { margin-top:20px; }
 
 const API_URL = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
 
-let lat = "";
-let lng = "";
-let incidenteId = "";
+let lat="", lng="", incidenteId="";
 
-// 📍 GPS
+// 📍 GPS AUTOMÁTICO
 navigator.geolocation.getCurrentPosition(
   function(pos){
     lat = pos.coords.latitude;
@@ -84,12 +122,16 @@ navigator.geolocation.getCurrentPosition(
   }
 );
 
-// 🚀 INICIAR INCIDENTE
+// 🚀 INICIAR
 function iniciar(){
 
-  if(!document.getElementById("ocorrencia").value ||
-     !document.getElementById("responsavel").value){
-    alert("Preencha ocorrência e responsável");
+  let local = document.getElementById("local").value;
+  let ocorrencia = document.getElementById("ocorrencia").value;
+  let responsavel = document.getElementById("responsavel").value;
+  let unidade = document.getElementById("unidade").value;
+
+  if(!local || !ocorrencia || !responsavel || !unidade){
+    alert("Preencha todos os campos");
     return;
   }
 
@@ -98,106 +140,70 @@ function iniciar(){
   document.getElementById("id").value = incidenteId;
   document.getElementById("idFinalizar").value = incidenteId;
 
-  document.getElementById("btnIniciar").disabled = true;
-  document.getElementById("ocorrencia").disabled = true;
-  document.getElementById("responsavel").disabled = true;
-
-  // 🔥 ENVIA PARA INCIDENTES
   fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
     body: JSON.stringify({
-      tipo: "inicio",
+      tipo:"inicio",
       id: incidenteId,
-      local: document.getElementById("local").value,
-      ocorrencia: document.getElementById("ocorrencia").value,
-      responsavel: document.getElementById("responsavel").value
+      local: local,
+      ocorrencia: ocorrencia,
+      responsavel: responsavel,
+      unidade: unidade
     })
   });
 
-  document.getElementById("status").innerText =
-    "✅ Incidente iniciado | ID: " + incidenteId;
+  document.getElementById("status").innerText = "Incidente iniciado";
 }
 
-// 📝 REGISTRAR EVENTO
+// 📝 REGISTRAR
 function registrar(){
 
-  if(!incidenteId){
-    alert("Inicie o incidente primeiro");
+  let idAtual = document.getElementById("id").value;
+
+  if(!idAtual){
+    alert("Informe o ID");
     return;
   }
 
-  let dados = {
-    tipo: "evento",
-    id: incidenteId,
-    descricao: document.getElementById("descricao").value,
-    emc: document.getElementById("emc").value,
-    positivos: document.getElementById("pos").value,
-    negativos: document.getElementById("neg").value,
-    latitude: lat,
-    longitude: lng
-  };
-
   fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
-    body: JSON.stringify(dados)
-  })
-  .then(function(){
-    document.getElementById("descricao").value = "";
-    document.getElementById("pos").value = "";
-    document.getElementById("neg").value = "";
-    document.getElementById("emc").value = "";
-
-    document.getElementById("status").innerText =
-      "✅ Evento registrado";
-  })
-  .catch(function(err){
-    console.error(err);
-    document.getElementById("status").innerText =
-      "❌ Erro ao enviar";
-  });
-}
-
-// 🏁 FINALIZAR INCIDENTE
-function finalizar(){
-
-  if(!incidenteId){
-    alert("Nenhum incidente ativo");
-    return;
-  }
-
-  // 🔥 ENVIA FINALIZAÇÃO
-  fetch(API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    },
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
     body: JSON.stringify({
-      tipo: "fim",
-      id: incidenteId
+      tipo:"evento",
+      id: idAtual,
+      descricao: document.getElementById("descricao").value,
+      emc: document.getElementById("emc").value,
+      negociacao: document.getElementById("negociacao").checked,
+      pausa: document.getElementById("pausa").checked,
+      progresso: document.getElementById("indicadorProgresso").value,
+      violencia: document.getElementById("indicadorViolencia").value,
+      positivos: document.getElementById("pos").value,
+      negativos: document.getElementById("neg").value,
+      latitude: lat,
+      longitude: lng
     })
   });
 
-  document.getElementById("btnIniciar").disabled = false;
-  document.getElementById("ocorrencia").disabled = false;
-  document.getElementById("responsavel").disabled = false;
+  document.getElementById("descricao").value="";
+  document.getElementById("pos").value="";
+  document.getElementById("neg").value="";
+}
 
-  document.getElementById("id").value = "";
-  document.getElementById("idFinalizar").value = "";
-  document.getElementById("descricao").value = "";
-  document.getElementById("pos").value = "";
-  document.getElementById("neg").value = "";
-  document.getElementById("emc").value = "";
+function finalizar(){
 
-  incidenteId = "";
+  let idAtual = document.getElementById("idFinalizar").value;
 
-  document.getElementById("status").innerText =
-    "🏁 Incidente finalizado";
+  fetch(API_URL, {
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      tipo:"fim",
+      id: idAtual
+    })
+  });
+
+  document.getElementById("status").innerText="Incidente finalizado";
 }
 
 </script>
