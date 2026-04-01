@@ -194,6 +194,11 @@ function finalizar(){
 
   let idAtual = document.getElementById("idFinalizar").value;
 
+  if(!idAtual){
+    alert("Informe o ID do incidente");
+    return;
+  }
+
   fetch(API_URL, {
     method:"POST",
     headers:{ "Content-Type":"text/plain;charset=utf-8" },
@@ -203,9 +208,40 @@ function finalizar(){
     })
   });
 
-  document.getElementById("status").innerText="Incidente finalizado";
-}
+  // 🔄 RESET COMPLETO DO SISTEMA
+  incidenteId = "";
 
+  // limpar campos
+  document.getElementById("local").value = "";
+  document.getElementById("ocorrencia").value = "";
+  document.getElementById("unidade").value = "";
+  document.getElementById("responsavel").value = "";
+
+  document.getElementById("id").value = "";
+  document.getElementById("idFinalizar").value = "";
+  document.getElementById("descricao").value = "";
+  document.getElementById("emc").value = "";
+  document.getElementById("pos").value = "";
+  document.getElementById("neg").value = "";
+
+  document.getElementById("indicadorProgresso").value = "";
+  document.getElementById("indicadorViolencia").value = "";
+
+  document.getElementById("negociacao").checked = true;
+  document.getElementById("pausa").checked = false;
+
+  // 🔁 reativar GPS automaticamente
+  navigator.geolocation.getCurrentPosition(function(pos){
+    lat = pos.coords.latitude;
+    lng = pos.coords.longitude;
+
+    document.getElementById("local").value =
+      lat.toFixed(6) + ", " + lng.toFixed(6);
+  });
+
+  document.getElementById("status").innerText =
+    "✅ Sistema pronto para novo incidente";
+}
 </script>
 
 </body>
