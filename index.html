@@ -183,11 +183,26 @@ function registrar(){
       latitude: lat,
       longitude: lng
     })
-  });
+  })
+  .then(function(){
 
-  document.getElementById("descricao").value="";
-  document.getElementById("pos").value="";
-  document.getElementById("neg").value="";
+    // 🧹 LIMPEZA PADRÃO
+    document.getElementById("descricao").value = "";
+    document.getElementById("pos").value = "";
+    document.getElementById("neg").value = "";
+    document.getElementById("emc").value = "";
+
+    // 🔥 NOVO: reset dos indicadores
+    document.getElementById("indicadorProgresso").selectedIndex = 0;
+    document.getElementById("indicadorViolencia").selectedIndex = 0;
+
+    document.getElementById("status").innerText = "✅ Evento registrado";
+
+  })
+  .catch(function(err){
+    console.error(err);
+    document.getElementById("status").innerText = "❌ Erro ao enviar";
+  });
 }
 
 function finalizar(){
