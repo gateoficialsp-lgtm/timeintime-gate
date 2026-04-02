@@ -121,6 +121,10 @@ body {
 <div id="ponteiro" class="pointer" style="left:50%"></div>
 </div>
 
+<button onclick="pararAlarme()" style="margin-top:10px;">
+🔇 Silenciar Alarme
+</button>
+  
 <h4 id="tendencia"></h4>
 </div>
 
@@ -201,7 +205,27 @@ function carregarCabecalho(){
   });
 }
 
-// 📊 eventos
+// ligar ou desligar o alarme  
+let audioAlarme;
+
+function tocarAlarme(){
+
+  if(!audioAlarme){
+    audioAlarme = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+    audioAlarme.loop = true;
+  }
+
+  audioAlarme.play();
+}
+
+function pararAlarme(){
+  if(audioAlarme){
+    audioAlarme.pause();
+    audioAlarme.currentTime = 0;
+  }
+}
+  
+  // 📊 eventos
 function atualizar(){
 
   fetch(API + "?tipo=eventos&id=" + idAtual)
@@ -264,8 +288,7 @@ function atualizar(){
     document.getElementById("alerta").style.color = "red";
 
     // som
-    document.getElementById("alertaSonoro").innerHTML =
-      '<audio autoplay><source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>';
+    tocarAlarme();
   }
     
     // 📡 EXIBIÇÃO (mais recente primeiro)
