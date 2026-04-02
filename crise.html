@@ -22,13 +22,11 @@ body {
   padding:10px;
 }
 
-/* filtros */
 .filtros input, .filtros select, .filtros button {
   padding:8px;
   margin:3px;
 }
 
-/* layout */
 .left { background:#1a1a1a; padding: 10px; overflow:auto; }
 .center { padding:15px; overflow:auto; }
 .right { background:#1a1a1a; padding:10px; }
@@ -63,7 +61,6 @@ body {
 
 <body>
 
-<!-- TOPO COM FILTROS -->
 <div class="header">
 
 <div class="filtros">
@@ -94,7 +91,6 @@ body {
 
 </div>
 
-<!-- ESQUERDA -->
 <div class="left">
 <h3>🟢 Proteção</h3>
 <div id="protecao"></div>
@@ -103,19 +99,16 @@ body {
 <div id="risco"></div>
 </div>
 
-<!-- CENTRO -->
 <div class="center">
 <h2>📡 Eventos</h2>
 <div id="eventos"></div>
 </div>
 
-<!-- DIREITA -->
 <div class="right">
 <h3>🧠 Análise</h3>
 
 <div id="ultimo"></div>
 <div id="recomendacao" style="margin-top:10px; font-weight:bold;"></div>
-<div id="alertaSonoro"></div>
 
 <div class="gauge">
 <div id="ponteiro" class="pointer" style="left:50%"></div>
@@ -124,11 +117,10 @@ body {
 <button onclick="pararAlarme()" style="margin-top:10px;">
 🔇 Silenciar Alarme
 </button>
-  
+
 <h4 id="tendencia"></h4>
 </div>
 
-<!-- RODAPÉ -->
 <div class="footer">
 <span id="alerta"></span>
 </div>
@@ -138,7 +130,36 @@ body {
 const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
 let idAtual = "";
 
-// 🔎 abrir por ID digitado
+// 🔊 CONTROLE PROFISSIONAL DO ÁUDIO
+let audioAlarme = null;
+let alarmeAtivo = false;
+let alarmeSilenciado = false;
+
+function tocarAlarme(){
+
+  if(alarmeSilenciado) return;
+  if(alarmeAtivo) return;
+
+  audioAlarme = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
+  audioAlarme.loop = true;
+  audioAlarme.play();
+
+  alarmeAtivo = true;
+}
+
+function pararAlarme(){
+
+  alarmeSilenciado = true;
+
+  if(audioAlarme){
+    audioAlarme.pause();
+    audioAlarme.currentTime = 0;
+  }
+
+  alarmeAtivo = false;
+}
+
+// 🔎 ID
 function carregarPorId(){
   let id = document.getElementById("inputId").value;
   if(!id){ alert("Informe o ID"); return; }
@@ -146,7 +167,7 @@ function carregarPorId(){
   carregarTudo();
 }
 
-// 🔎 buscar por data
+// 🔎 DATA
 function buscarPorData(){
 
   let data = document.getElementById("filtroData").value;
@@ -172,7 +193,7 @@ function buscarPorData(){
   });
 }
 
-// 🔎 selecionar da lista
+// 🔎 LISTA
 function selecionarLista(){
   let id = document.getElementById("listaIncidentes").value;
   if(!id){ alert("Selecione um incidente"); return; }
@@ -180,7 +201,7 @@ function selecionarLista(){
   carregarTudo();
 }
 
-// 📋 cabeçalho
+// 📋 CABEÇALHO
 function carregarCabecalho(){
 
   fetch(API + "?tipo=incidentes")
@@ -197,40 +218,12 @@ function carregarCabecalho(){
 
         document.getElementById("status").innerText =
           item.fim ? "FINALIZADO" : "EM ANDAMENTO";
-
       }
-
     });
-
   });
 }
 
-// ligar ou desligar o alarme  
-let audioAlarme;
-let alarmeSilenciado = false;
-
-function tocarAlarme(){
-
-  if(alarmeSilenciado) return; // 🔥 trava o retorno
-  
-  if(!audioAlarme){
-    audioAlarme = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
-    audioAlarme.loop = true;
-  }
-
-  audioAlarme.play();
-}
-
-function pararAlarme(){
-
-  alarmeSilenciado = true; // 🔥 trava o sistema  
-  if(audioAlarme){
-    audioAlarme.pause();
-    audioAlarme.currentTime = 0;
-  }
-}
-  
-  // 📊 eventos
+// 📊 ATUALIZAÇÃO
 function atualizar(){
 
   fetch(API + "?tipo=eventos&id=" + idAtual)
@@ -242,22 +235,20 @@ function atualizar(){
 
     let protecao = new Set();
     let risco = new Set();
-    let recomendacao = "";
-    let alertaCritico = false;
 
     let score = 0;
     let ultimo = "";
+    let alertaCritico = false;
 
-    // 🧠 PROCESSAMENTO NORMAL (ordem cronológica)
     lista.forEach(e=>{
 
       if(e.positivos) protecao.add(e.positivos);
       if(e.negativos) risco.add(e.negativos);
 
-      // 🔴 REGRA DE ESCALADA CRÍTICA IMEDIATA
       if(e.violencia === "Agride ou atira" || e.violencia === "Mata reféns"){
         alertaCritico = true;
-      }  
+      }
+
       if(e.progresso){
         score++;
         ultimo = "🟢 " + e.progresso;
@@ -267,72 +258,40 @@ function atualizar(){
         score--;
         ultimo = "🔴 " + e.violencia;
       }
-
     });
 
-    // 🎯 RECOMENDAÇÃO AUTOMÁTICA
-  if(alertaCritico){
-    recomendacao = "🚨 INTERVENÇÃO IMEDIATA / PROTOCOLO TÁTICO";
-  }
-  else if(score <= -3){
-    recomendacao = "🔴 REDUZIR PRESSÃO / PAUSA ESTRATÉGICA";
-  }
-  else if(score >= 3){
-    recomendacao = "🟢 MANTER ESTRATÉGIA ATUAL";
-  }
-  else{
-    recomendacao = "🟡 ESTABILIZAR / ESCUTA ATIVA";
-  }
-  // reset automático do alarme
+    // 🔄 RESET DO SISTEMA (quando melhora)
     if(score > -2){
-    alarmeSilenciado = false;
-  }
-  // aplicar
-  document.getElementById("recomendacao").innerText = recomendacao;
+      alarmeAtivo = false;
+      alarmeSilenciado = false;
+    }
 
-  // 🚨 ALERTA VISUAL + SONORO
-  if(alertaCritico){
-    document.getElementById("alerta").innerText = "🚨 ESCALADA CRÍTICA IMEDIATA";
-    document.getElementById("alerta").style.color = "red";
+    // 🔊 ALERTA
+    if(alertaCritico){
+      document.getElementById("alerta").innerText = "🚨 ESCALADA CRÍTICA IMEDIATA";
+      document.getElementById("alerta").style.color = "red";
 
-    // som
-    tocarAlarme();
-  }
-    
-    // 📡 EXIBIÇÃO (mais recente primeiro)
+      tocarAlarme();
+    }
+
+    // 📡 EVENTOS
     lista.slice().reverse().forEach(e=>{
       eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
     });
 
-    // lateral
-    document.getElementById("protecao").innerHTML =
-      [...protecao].join("<br>");
-
-    document.getElementById("risco").innerHTML =
-      [...risco].join("<br>");
-
-    // 🔥 agora correto
+    document.getElementById("protecao").innerHTML = [...protecao].join("<br>");
+    document.getElementById("risco").innerHTML = [...risco].join("<br>");
     document.getElementById("ultimo").innerText = ultimo;
 
-    // 🎯 ODÔMETRO
     let pos = 50 + (score * 5);
     pos = Math.max(0, Math.min(100, pos));
     document.getElementById("ponteiro").style.left = pos + "%";
 
-    // tendência
     let tendencia = "ESTÁVEL";
     if(score > 2) tendencia = "PROGRESSO";
     if(score < -2) tendencia = "RISCO ELEVADO";
 
     document.getElementById("tendencia").innerText = tendencia;
-
-    // alerta padrão (se não for crítica imediata)
-    if(document.getElementById("alerta").innerText === ""){
-      let alerta = "";
-      if(score < -3) alerta = "🚨 ESCALADA CRÍTICA";
-      if(score > 3) alerta = "🟢 EVOLUÇÃO POSITIVA";
-      document.getElementById("alerta").innerText = alerta;
-    }
 
   });
 }
