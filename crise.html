@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sala de Crise</title>
+
+<style>
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0b0b0b;
+  color:#fff;
+  display:grid;
+  grid-template-columns: 20% 60% 20%;
+  grid-template-rows: 80px auto 80px;
+  height:100vh;
+}
+
+/* TOPO */
+.header {
+  grid-column:1 / 4;
+  background:#111;
+  padding:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+/* ESQUERDA */
+.left {
+  background:#1a1a1a;
+  padding:10px;
+  overflow:auto;
+}
+
+/* CENTRO */
+.center {
+  padding:15px;
+  overflow:auto;
+}
+
+/* DIREITA */
+.right {
+  background:#1a1a1a;
+  padding:10px;
+}
+
+/* RODAPÉ */
+.footer {
+  grid-column:1 / 4;
+  background:#000;
+  text-align:center;
+  padding:10px;
+}
+
+/* EVENTOS */
+.evento {
+  padding:10px;
+  border-bottom:1px solid #333;
+}
+
+/* ODÔMETRO */
+.gauge {
+  height:25px;
+  background:linear-gradient(to right, red, yellow, green);
+  position:relative;
+  margin-top:10px;
+}
+
+.pointer {
+  width:4px;
+  height:35px;
+  background:#fff;
+  position:absolute;
+  top:-5px;
+}
+</style>
+
+</head>
+
+<body>
+
+<!-- TOPO -->
+<div class="header">
+  <div>
+    <b>ID:</b> <span id="id"></span> |
+    <b>Unidade:</b> <span id="unidade"></span>
+  </div>
+
+  <div>
+    <b>Início:</b> <span id="inicio"></span>
+  </div>
+
+  <div>
+    <b>Status:</b> <span id="status">---</span>
+  </div>
+</div>
+
+<!-- ESQUERDA -->
+<div class="left">
+  <h3>🟢 Proteção</h3>
+  <div id="protecao"></div>
+
+  <h3>🔴 Risco</h3>
+  <div id="risco"></div>
+</div>
+
+<!-- CENTRO -->
+<div class="center">
+  <h2>📡 Linha do Tempo</h2>
+  <div id="eventos"></div>
+</div>
+
+<!-- DIREITA -->
+<div class="right">
+  <h3>🧠 Análise</h3>
+
+  <div id="ultimo"></div>
+
+  <div class="gauge">
+    <div id="ponteiro" class="pointer" style="left:50%"></div>
+  </div>
+
+  <h4 id="tendencia"></h4>
+</div>
+
+<!-- RODAPÉ -->
+<div class="footer">
+  <span id="alerta"></span>
+</div>
+
+<script>
+
+// 🔐 COLE AQUI SEU LINK /exec
+const API = "COLE_AQUI_SEU_LINK_DO_APPS_SCRIPT";
+
+// 🔎 pegar ID pela URL
+const params = new URLSearchParams(window.location.search);
+let idAtual = params.get("id");
+
+// 📋 CARREGAR CABEÇALHO
+function carregarCabecalho(){
+
+  fetch(API + "?tipo=incidentes")
+  .then(r=>r.json())
+  .then(lista=>{
+
+    lista.forEach(item=>{
+
+      if(item.id == idAtual){
+
+        document.getElementById("id").innerText = item.id;
+        document.getElementById("inicio").innerText = item.inicio;
+        document.getElementById("unidade").innerText = item.unidade;
+
+        // status
+        if(item.fim){
+          document.getElementById("status").innerText = "FINALIZADO";
+        } else {
+          document.getElementById("status").innerText = "EM ANDAMENTO";
+        }
+
+      }
+
+    });
+
+  });
+}
+
+// 📊 ATUALIZAR EVENTOS
+function atualizar(){
+
+  fetch(API + "?tipo=eventos&id=" + idAtual)
+  .then(r=>r.json())
+  .then(lista=>{
+
+    let eventosDiv = document.getElementById("eventos");
+    eventosDiv.innerHTML = "";
+
+    let protecao = new Set();
+    let risco = new Set();
+
+    let score = 0;
+    let ultimo = "";
+
+    lista.reverse().forEach(e=>{
+
+      if(e.positivos) protecao.add(e.positivos);
+      if(e.negativos) risco.add(e.negativos);
+
+      if(e.progresso){
+        score++;
+        ultimo = "🟢 " + e.progresso;
+      }
+
+      if(e.violencia){
+        score--;
+        ultimo = "🔴 " + e.violencia;
+      }
+
+      eventosDiv.innerHTML += `
+        <div class="evento">${e.descricao}</div>
+      `;
+
+    });
+
+    // lateral
+    document.getElementById("protecao").innerHTML =
+      [...protecao].join("<br>");
+
+    document.getElementById("risco").innerHTML =
+      [...risco].join("<br>");
+
+    // último indicador
+    document.getElementById("ultimo").innerText = ultimo;
+
+    // odômetro
+    let pos = 50 + (score * 5);
+    pos = Math.max(0, Math.min(100, pos));
+    document.getElementById("ponteiro").style.left = pos + "%";
+
+    // tendência
+    let tendencia = "ESTÁVEL";
+
+    if(score > 2) tendencia = "PROGRESSO";
+    if(score < -2) tendencia = "RISCO ELEVADO";
+
+    document.getElementById("tendencia").innerText = tendencia;
+
+    // alerta
+    let alerta = "";
+
+    if(score < -3) alerta = "🚨 ESCALADA CRÍTICA";
+    if(score > 3) alerta = "🟢 EVOLUÇÃO POSITIVA";
+
+    document.getElementById("alerta").innerText = alerta;
+
+  });
+}
+
+// 🔄 atualização contínua
+setInterval(atualizar, 3000);
+
+// 🚀 inicialização
+if(idAtual){
+  carregarCabecalho();
+  atualizar();
+} else {
+  alert("Abra com ?id=XXXX");
+}
+
+</script>
+
+</body>
+</html>
