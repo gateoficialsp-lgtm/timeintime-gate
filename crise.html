@@ -215,40 +215,64 @@ function atualizar(){
     let score = 0;
     let ultimo = "";
 
-    lista.reverse().forEach(e=>{
+    // 🧠 PROCESSAMENTO NORMAL (ordem cronológica)
+    lista.forEach(e=>{
 
       if(e.positivos) protecao.add(e.positivos);
       if(e.negativos) risco.add(e.negativos);
 
-      if(e.progresso){ score++; ultimo = "🟢 " + e.progresso; }
-      if(e.violencia){ score--; ultimo = "🔴 " + e.violencia; }
+      // 🔴 REGRA DE ESCALADA CRÍTICA IMEDIATA
+      if(e.violencia === "Agride ou atira" || e.violencia === "Mata reféns"){
+        document.getElementById("alerta").innerText = "🚨 ESCALADA CRÍTICA IMEDIATA";
+        document.getElementById("alerta").style.color = "red";
+        document.getElementById("alerta").style.fontSize = "20px";
+      }  
+      if(e.progresso){
+        score++;
+        ultimo = "🟢 " + e.progresso;
+      }
 
+      if(e.violencia){
+        score--;
+        ultimo = "🔴 " + e.violencia;
+      }
+
+    });
+
+    // 📡 EXIBIÇÃO (mais recente primeiro)
+    lista.slice().reverse().forEach(e=>{
       eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
     });
 
+    // lateral
     document.getElementById("protecao").innerHTML =
       [...protecao].join("<br>");
 
     document.getElementById("risco").innerHTML =
       [...risco].join("<br>");
 
+    // 🔥 agora correto
     document.getElementById("ultimo").innerText = ultimo;
 
+    // 🎯 ODÔMETRO
     let pos = 50 + (score * 5);
     pos = Math.max(0, Math.min(100, pos));
     document.getElementById("ponteiro").style.left = pos + "%";
 
+    // tendência
     let tendencia = "ESTÁVEL";
     if(score > 2) tendencia = "PROGRESSO";
     if(score < -2) tendencia = "RISCO ELEVADO";
 
     document.getElementById("tendencia").innerText = tendencia;
 
-    let alerta = "";
-    if(score < -3) alerta = "🚨 ESCALADA CRÍTICA";
-    if(score > 3) alerta = "🟢 EVOLUÇÃO POSITIVA";
-
-    document.getElementById("alerta").innerText = alerta;
+    // alerta padrão (se não for crítica imediata)
+    if(document.getElementById("alerta").innerText === ""){
+      let alerta = "";
+      if(score < -3) alerta = "🚨 ESCALADA CRÍTICA";
+      if(score > 3) alerta = "🟢 EVOLUÇÃO POSITIVA";
+      document.getElementById("alerta").innerText = alerta;
+    }
 
   });
 }
