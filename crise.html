@@ -12,67 +12,49 @@ body {
   color:#fff;
   display:grid;
   grid-template-columns: 15% 70% 15%;
-  grid-template-rows: 130px auto 80px;
-  height:120vh;
+  grid-template-rows: 140px auto 80px;
+  height:100vh;
 }
 
 .header { grid-column:1 / 4; background:#111; padding:10px; }
-.filtros input, .filtros select, .filtros button { padding:8px; margin:3px; }
+
 .left { background:#1a1a1a; padding:10px; overflow:auto; }
 .center { padding:15px; overflow:auto; }
 .right { background:#1a1a1a; padding:10px; }
+
 .footer { grid-column:1 / 4; background:#000; text-align:center; padding:10px; }
 
 .evento { padding:10px; border-bottom:1px solid #333; }
 
-.gauge {
-  height:25px;
-  background:linear-gradient(to right, red, yellow, green);
-  position:relative;
-}
-
-.pointer {
-  width:4px;
-  height:35px;
-  background:#fff;
-  position:absolute;
-  top:-5px;
-}
+.gauge { height:25px; background:linear-gradient(to right, red, yellow, green); position:relative; }
+.pointer { width:4px; height:35px; background:#fff; position:absolute; top:-5px; }
 </style>
 </head>
 
 <body>
 
 <div class="header">
-<div class="filtros">
 
 <b>ID:</b>
 <input id="inputId">
 <button onclick="carregarPorId()">Abrir</button>
 
-<br>
-
-<input type="date" id="filtroData">
-<button onclick="buscarPorData()">Buscar</button>
-
-<select id="listaIncidentes"></select>
-<button onclick="selecionarLista()">Abrir</button>
-
-</div>
+<button onclick="gerarPDF()">📄 Relatório</button>
 
 <hr>
 
 <div>
 <b>ID:</b> <span id="id"></span> |
 <b>Unidade:</b> <span id="unidade"></span> |
-<b>Início:</b> <span id="inicio"></span> |
 <b>Status:</b> <span id="status"></span>
 </div>
+
 </div>
 
 <div class="left">
 <h3>🟢 Proteção</h3>
 <div id="protecao"></div>
+
 <h3>🔴 Risco</h3>
 <div id="risco"></div>
 </div>
@@ -93,7 +75,6 @@ body {
 
 <button onclick="pararAlarme()">🔇 Silenciar</button>
 
-<h4 id="tendencia"></h4>
 </div>
 
 <div class="footer">
@@ -106,23 +87,17 @@ body {
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+const API = "COLE_AQUI_SEU_LINK_EXEC";
 
 let idAtual = "";
-
-// 🔥 CONTROLE POR TRANSIÇÃO
 let estadoCriticoAnterior = false;
-
 let alarmeSilenciado = false;
 let alarmeAtivo = false;
 
 function tocarAlarme(){
-
-  if(alarmeSilenciado) return;
-  if(alarmeAtivo) return;
+  if(alarmeSilenciado || alarmeAtivo) return;
 
   let audio = document.getElementById("alarmeAudio");
-
   audio.currentTime = 0;
   audio.play();
 
@@ -130,9 +105,7 @@ function tocarAlarme(){
 }
 
 function pararAlarme(){
-
   let audio = document.getElementById("alarmeAudio");
-
   audio.pause();
   audio.currentTime = 0;
 
@@ -140,56 +113,17 @@ function pararAlarme(){
   alarmeAtivo = false;
 }
 
-// 🔎 ID
+function gerarPDF(){
+  if(!idAtual){
+    alert("Selecione um incidente");
+    return;
+  }
+
+  window.open(API + "?relatorio=" + idAtual, "_blank");
+}
+
 function carregarPorId(){
   idAtual = document.getElementById("inputId").value;
-  carregarTudo();
-}
-
-// 🔎 DATA
-function buscarPorData(){
-
-  let data = document.getElementById("filtroData").value;
-
-  fetch(API + "?tipo=incidentes")
-  .then(r=>r.json())
-  .then(lista=>{
-
-    let select = document.getElementById("listaIncidentes");
-    select.innerHTML = "";
-
-    lista.forEach(item=>{
-      if(data && !item.inicio.includes(data)) return;
-
-      let opt = document.createElement("option");
-      opt.value = item.id;
-      opt.text = item.id + " | " + item.ocorrencia;
-
-      select.appendChild(opt);
-    });
-
-  });
-}
-
-function selecionarLista(){
-  idAtual = document.getElementById("listaIncidentes").value;
-  carregarTudo();
-}
-
-function carregarCabecalho(){
-
-  fetch(API + "?tipo=incidentes")
-  .then(r=>r.json())
-  .then(lista=>{
-    lista.forEach(item=>{
-      if(item.id == idAtual){
-        document.getElementById("id").innerText = item.id;
-        document.getElementById("inicio").innerText = item.inicio;
-        document.getElementById("unidade").innerText = item.unidade;
-        document.getElementById("status").innerText = item.fim ? "FINALIZADO" : "EM ANDAMENTO";
-      }
-    });
-  });
 }
 
 function atualizar(){
@@ -200,10 +134,12 @@ function atualizar(){
 
     let alertaCritico = false;
     let score = 0;
-    let ultimo = "";
 
     let protecao = new Set();
     let risco = new Set();
+
+    let eventosDiv = document.getElementById("eventos");
+    eventosDiv.innerHTML = "";
 
     lista.forEach(e=>{
 
@@ -214,11 +150,12 @@ function atualizar(){
         alertaCritico = true;
       }
 
-      if(e.progresso){ score++; ultimo = e.progresso; }
-      if(e.violencia){ score--; ultimo = e.violencia; }
+      if(e.progresso) score++;
+      if(e.violencia) score--;
+
     });
 
-    // 🔥 EDGE TRIGGER (SOLUÇÃO FINAL)
+    // 🔥 DISPARO POR MUDANÇA
     if(alertaCritico && !estadoCriticoAnterior){
       tocarAlarme();
     }
@@ -228,27 +165,17 @@ function atualizar(){
     document.getElementById("alerta").innerText =
       alertaCritico ? "🚨 ESCALADA CRÍTICA" : "";
 
-    // UI
-    let eventosDiv = document.getElementById("eventos");
-    eventosDiv.innerHTML = "";
-
     lista.slice().reverse().forEach(e=>{
       eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
     });
 
     document.getElementById("protecao").innerHTML = [...protecao].join("<br>");
     document.getElementById("risco").innerHTML = [...risco].join("<br>");
-    document.getElementById("ultimo").innerText = ultimo;
 
     let pos = 50 + score*5;
     document.getElementById("ponteiro").style.left = pos+"%";
 
   });
-}
-
-function carregarTudo(){
-  carregarCabecalho();
-  atualizar();
 }
 
 setInterval(()=>{ if(idAtual) atualizar(); }, 3000);
