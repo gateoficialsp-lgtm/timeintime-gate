@@ -288,6 +288,8 @@ function finalizar(){
 
   document.getElementById("status").innerText =
     "✅ Sistema pronto para novo incidente";
+  // 📄 BAIXAR RELATÓRIO
+  window.open(API_URL + "?relatorio=" + idAtual, "_blank");
 }
 
 </script>
