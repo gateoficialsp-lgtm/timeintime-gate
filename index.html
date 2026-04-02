@@ -114,7 +114,7 @@ const API_URL = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBh
 
 let lat="", lng="", incidenteId="";
 
-// 📍 GPS AUTOMÁTICO
+// 📍 GPS
 navigator.geolocation.getCurrentPosition(
   function(pos){
     lat = pos.coords.latitude;
@@ -127,6 +127,58 @@ navigator.geolocation.getCurrentPosition(
     document.getElementById("local").value = "Localização indisponível";
   }
 );
+
+// 🧠 FUNÇÃO CENTRAL (ONLINE / OFFLINE)
+function enviarOuSalvar(dados){
+
+  if(navigator.onLine){
+
+    fetch(API_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(dados)
+    })
+    .catch(()=>{
+      salvarOffline(dados);
+    });
+
+  } else {
+    salvarOffline(dados);
+  }
+}
+
+// 💾 SALVAR LOCAL
+function salvarOffline(dados){
+
+  let fila = JSON.parse(localStorage.getItem("fila") || "[]");
+  fila.push(dados);
+  localStorage.setItem("fila", JSON.stringify(fila));
+
+  document.getElementById("status").innerText = "📴 Salvo offline";
+}
+
+// 🔄 SINCRONIZAR
+function sincronizar(){
+
+  let fila = JSON.parse(localStorage.getItem("fila") || "[]");
+
+  if(fila.length === 0) return;
+
+  fila.forEach(dados=>{
+    fetch(API_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"text/plain;charset=utf-8" },
+      body: JSON.stringify(dados)
+    });
+  });
+
+  localStorage.removeItem("fila");
+
+  document.getElementById("status").innerText = "☁️ Dados sincronizados";
+}
+
+// 🔄 evento de reconexão
+window.addEventListener("online", sincronizar);
 
 // 🚀 INICIAR
 function iniciar(){
@@ -146,17 +198,13 @@ function iniciar(){
   document.getElementById("id").value = incidenteId;
   document.getElementById("idFinalizar").value = incidenteId;
 
-  fetch(API_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      tipo:"inicio",
-      id: incidenteId,
-      local: local,
-      ocorrencia: ocorrencia,
-      responsavel: responsavel,
-      unidade: unidade
-    })
+  enviarOuSalvar({
+    tipo:"inicio",
+    id: incidenteId,
+    local: local,
+    ocorrencia: ocorrencia,
+    responsavel: responsavel,
+    unidade: unidade
   });
 
   document.getElementById("status").innerText = "Incidente iniciado";
@@ -172,45 +220,33 @@ function registrar(){
     return;
   }
 
-  fetch(API_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      tipo:"evento",
-      id: idAtual,
-      descricao: document.getElementById("descricao").value,
-      emc: document.getElementById("emc").value,
-      negociacao: document.getElementById("negociacao").checked,
-      pausa: document.getElementById("pausa").checked,
-      progresso: document.getElementById("indicadorProgresso").value,
-      violencia: document.getElementById("indicadorViolencia").value,
-      positivos: document.getElementById("pos").value,
-      negativos: document.getElementById("neg").value,
-      latitude: lat,
-      longitude: lng
-    })
-  })
-  .then(function(){
-
-    // 🧹 LIMPEZA PADRÃO
-    document.getElementById("descricao").value = "";
-    document.getElementById("pos").value = "";
-    document.getElementById("neg").value = "";
-    document.getElementById("emc").value = "";
-
-    // 🔥 NOVO: reset dos indicadores
-    document.getElementById("indicadorProgresso").selectedIndex = 0;
-    document.getElementById("indicadorViolencia").selectedIndex = 0;
-
-    document.getElementById("status").innerText = "✅ Evento registrado";
-
-  })
-  .catch(function(err){
-    console.error(err);
-    document.getElementById("status").innerText = "❌ Erro ao enviar";
+  enviarOuSalvar({
+    tipo:"evento",
+    id: idAtual,
+    descricao: document.getElementById("descricao").value,
+    emc: document.getElementById("emc").value,
+    negociacao: document.getElementById("negociacao").checked,
+    pausa: document.getElementById("pausa").checked,
+    progresso: document.getElementById("indicadorProgresso").value,
+    violencia: document.getElementById("indicadorViolencia").value,
+    positivos: document.getElementById("pos").value,
+    negativos: document.getElementById("neg").value,
+    latitude: lat,
+    longitude: lng
   });
+
+  // limpeza
+  document.getElementById("descricao").value="";
+  document.getElementById("pos").value="";
+  document.getElementById("neg").value="";
+  document.getElementById("emc").value="";
+  document.getElementById("indicadorProgresso").selectedIndex=0;
+  document.getElementById("indicadorViolencia").selectedIndex=0;
+
+  document.getElementById("status").innerText = "✅ Evento registrado";
 }
 
+// 🏁 FINALIZAR
 function finalizar(){
 
   let idAtual = document.getElementById("idFinalizar").value;
@@ -220,42 +256,32 @@ function finalizar(){
     return;
   }
 
-  fetch(API_URL, {
-    method:"POST",
-    headers:{ "Content-Type":"text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      tipo:"fim",
-      id: idAtual
-    })
+  enviarOuSalvar({
+    tipo:"fim",
+    id: idAtual
   });
 
-  // 🔄 RESET COMPLETO DO SISTEMA
+  // reset
   incidenteId = "";
 
-  // limpar campos
-  document.getElementById("local").value = "";
-  document.getElementById("ocorrencia").value = "";
-  document.getElementById("unidade").value = "";
-  document.getElementById("responsavel").value = "";
+  document.getElementById("local").value="";
+  document.getElementById("ocorrencia").value="";
+  document.getElementById("unidade").value="";
+  document.getElementById("responsavel").value="";
+  document.getElementById("id").value="";
+  document.getElementById("idFinalizar").value="";
+  document.getElementById("descricao").value="";
+  document.getElementById("emc").value="";
+  document.getElementById("pos").value="";
+  document.getElementById("neg").value="";
+  document.getElementById("indicadorProgresso").value="";
+  document.getElementById("indicadorViolencia").value="";
+  document.getElementById("negociacao").checked=true;
+  document.getElementById("pausa").checked=false;
 
-  document.getElementById("id").value = "";
-  document.getElementById("idFinalizar").value = "";
-  document.getElementById("descricao").value = "";
-  document.getElementById("emc").value = "";
-  document.getElementById("pos").value = "";
-  document.getElementById("neg").value = "";
-
-  document.getElementById("indicadorProgresso").value = "";
-  document.getElementById("indicadorViolencia").value = "";
-
-  document.getElementById("negociacao").checked = true;
-  document.getElementById("pausa").checked = false;
-
-  // 🔁 reativar GPS automaticamente
   navigator.geolocation.getCurrentPosition(function(pos){
     lat = pos.coords.latitude;
     lng = pos.coords.longitude;
-
     document.getElementById("local").value =
       lat.toFixed(6) + ", " + lng.toFixed(6);
   });
@@ -263,6 +289,7 @@ function finalizar(){
   document.getElementById("status").innerText =
     "✅ Sistema pronto para novo incidente";
 }
+
 </script>
 
 </body>
