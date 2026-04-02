@@ -17,11 +17,9 @@ body {
 }
 
 .header { grid-column:1 / 4; background:#111; padding:10px; }
-
 .left { background:#1a1a1a; padding:10px; overflow:auto; }
 .center { padding:15px; overflow:auto; }
 .right { background:#1a1a1a; padding:10px; }
-
 .footer { grid-column:1 / 4; background:#000; text-align:center; padding:10px; }
 
 .evento { padding:10px; border-bottom:1px solid #333; }
@@ -36,8 +34,8 @@ body {
 <div class="header">
 
 <div>
-<b>ID direto:</b>
-<input id="inputId" placeholder="Digite o ID">
+<b>ID:</b>
+<input id="inputId">
 <button onclick="carregarPorId()">Abrir</button>
 
 <button onclick="gerarPDF()">📄 Relatório</button>
@@ -51,7 +49,7 @@ body {
 <button onclick="buscarPorData()">Buscar</button>
 
 <select id="listaIncidentes"></select>
-<button onclick="selecionarLista()">Abrir selecionado</button>
+<button onclick="selecionarLista()">Abrir</button>
 </div>
 
 <hr>
@@ -80,14 +78,11 @@ body {
 <div class="right">
 <h3>🧠 Análise</h3>
 
-<div id="ultimo"></div>
-
 <div class="gauge">
 <div id="ponteiro" class="pointer"></div>
 </div>
 
 <button onclick="pararAlarme()">🔇 Silenciar</button>
-
 </div>
 
 <div class="footer">
@@ -100,7 +95,7 @@ body {
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+const API = "SEU_LINK_EXEC";
 
 let idAtual = "";
 let estadoCriticoAnterior = false;
@@ -136,13 +131,13 @@ function gerarPDF(){
   window.open(API + "?relatorio=" + idAtual, "_blank");
 }
 
-// 🔎 POR ID
+// 🔎 ID
 function carregarPorId(){
   idAtual = document.getElementById("inputId").value;
   carregarCabecalho();
 }
 
-// 🔎 POR DATA
+// 🔎 DATA
 function buscarPorData(){
 
   let data = document.getElementById("filtroData").value;
@@ -156,7 +151,8 @@ function buscarPorData(){
 
     lista.forEach(item=>{
 
-      if(data && !item.inicio.includes(data)) return;
+      let dataInicio = item.inicio.split("T")[0];
+      if(data && dataInicio !== data) return;
 
       let opt = document.createElement("option");
       opt.value = item.id;
@@ -168,7 +164,7 @@ function buscarPorData(){
   });
 }
 
-// 🔎 SELECIONAR LISTA
+// 🔎 SELEÇÃO
 function selecionarLista(){
   idAtual = document.getElementById("listaIncidentes").value;
   carregarCabecalho();
@@ -182,21 +178,18 @@ function carregarCabecalho(){
   .then(lista=>{
 
     lista.forEach(item=>{
-
       if(item.id == idAtual){
-
         document.getElementById("id").innerText = item.id;
         document.getElementById("unidade").innerText = item.unidade;
         document.getElementById("status").innerText =
           item.fim ? "FINALIZADO" : "EM ANDAMENTO";
       }
-
     });
 
   });
 }
 
-// 📊 ATUALIZAÇÃO
+// 📊 EVENTOS
 function atualizar(){
 
   fetch(API + "?tipo=eventos&id=" + idAtual)
@@ -206,16 +199,10 @@ function atualizar(){
     let alertaCritico = false;
     let score = 0;
 
-    let protecao = new Set();
-    let risco = new Set();
-
     let eventosDiv = document.getElementById("eventos");
     eventosDiv.innerHTML = "";
 
     lista.forEach(e=>{
-
-      if(e.positivos) protecao.add(e.positivos);
-      if(e.negativos) risco.add(e.negativos);
 
       if(e.violencia === "Agride ou atira" || e.violencia === "Mata reféns"){
         alertaCritico = true;
@@ -223,10 +210,8 @@ function atualizar(){
 
       if(e.progresso) score++;
       if(e.violencia) score--;
-
     });
 
-    // 🔥 EDGE TRIGGER (sem loop)
     if(alertaCritico && !estadoCriticoAnterior){
       tocarAlarme();
     }
@@ -240,16 +225,12 @@ function atualizar(){
       eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
     });
 
-    document.getElementById("protecao").innerHTML = [...protecao].join("<br>");
-    document.getElementById("risco").innerHTML = [...risco].join("<br>");
-
     let pos = 50 + score*5;
     document.getElementById("ponteiro").style.left = pos+"%";
 
   });
 }
 
-// 🔁 LOOP
 setInterval(()=>{ if(idAtual) atualizar(); }, 3000);
 
 </script>
