@@ -130,13 +130,17 @@ body {
 <span id="alerta"></span>
 </div>
 
+<!-- 🔊 ÁUDIO FIXO (NÃO RECRIA) -->
+<audio id="alarmeAudio" loop>
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg">
+</audio>
+
 <script>
 
 const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
 let idAtual = "";
 
 // 🔊 CONTROLE DEFINITIVO
-let audioAlarme = null;
 let alarmeAtivo = false;
 let alarmeSilenciado = false;
 let alertaJaDisparado = false;
@@ -147,9 +151,10 @@ function tocarAlarme(){
   if(alarmeSilenciado) return;
   if(alarmeAtivo) return;
 
-  audioAlarme = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
-  audioAlarme.loop = true;
-  audioAlarme.play();
+  let audio = document.getElementById("alarmeAudio");
+
+  audio.currentTime = 0;
+  audio.play();
 
   alarmeAtivo = true;
 }
@@ -157,13 +162,12 @@ function tocarAlarme(){
 // 🔇 PARAR
 function pararAlarme(){
 
+  let audio = document.getElementById("alarmeAudio");
+
+  audio.pause();
+  audio.currentTime = 0;
+
   alarmeSilenciado = true;
-
-  if(audioAlarme){
-    audioAlarme.pause();
-    audioAlarme.currentTime = 0;
-  }
-
   alarmeAtivo = false;
 }
 
