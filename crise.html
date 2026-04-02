@@ -27,7 +27,7 @@ body {
   margin:3px;
 }
 
-.left { background:#1a1a1a; padding: 10px; overflow:auto; }
+.left { background:#1a1a1a; padding:10px; overflow:auto; }
 .center { padding:15px; overflow:auto; }
 .right { background:#1a1a1a; padding:10px; }
 
@@ -61,6 +61,7 @@ body {
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
 
 <div class="filtros">
@@ -91,6 +92,7 @@ body {
 
 </div>
 
+<!-- LATERAL -->
 <div class="left">
 <h3>🟢 Proteção</h3>
 <div id="protecao"></div>
@@ -99,11 +101,13 @@ body {
 <div id="risco"></div>
 </div>
 
+<!-- CENTRO -->
 <div class="center">
 <h2>📡 Eventos</h2>
 <div id="eventos"></div>
 </div>
 
+<!-- DIREITA -->
 <div class="right">
 <h3>🧠 Análise</h3>
 
@@ -121,6 +125,7 @@ body {
 <h4 id="tendencia"></h4>
 </div>
 
+<!-- RODAPÉ -->
 <div class="footer">
 <span id="alerta"></span>
 </div>
@@ -130,11 +135,13 @@ body {
 const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
 let idAtual = "";
 
-// 🔊 CONTROLE PROFISSIONAL DO ÁUDIO
+// 🔊 CONTROLE DEFINITIVO
 let audioAlarme = null;
 let alarmeAtivo = false;
 let alarmeSilenciado = false;
+let alertaJaDisparado = false;
 
+// 🔊 TOCAR
 function tocarAlarme(){
 
   if(alarmeSilenciado) return;
@@ -147,6 +154,7 @@ function tocarAlarme(){
   alarmeAtivo = true;
 }
 
+// 🔇 PARAR
 function pararAlarme(){
 
   alarmeSilenciado = true;
@@ -180,7 +188,6 @@ function buscarPorData(){
     select.innerHTML = "";
 
     lista.forEach(item=>{
-
       if(data && !item.inicio.includes(data)) return;
 
       let opt = document.createElement("option");
@@ -209,7 +216,6 @@ function carregarCabecalho(){
   .then(lista=>{
 
     lista.forEach(item=>{
-
       if(item.id == idAtual){
 
         document.getElementById("id").innerText = item.id;
@@ -220,6 +226,7 @@ function carregarCabecalho(){
           item.fim ? "FINALIZADO" : "EM ANDAMENTO";
       }
     });
+
   });
 }
 
@@ -260,18 +267,26 @@ function atualizar(){
       }
     });
 
-    // 🔄 RESET DO SISTEMA (quando melhora)
+    // 🔄 RESET (quando melhora)
     if(score > -2){
       alarmeAtivo = false;
       alarmeSilenciado = false;
+      alertaJaDisparado = false;
     }
 
-    // 🔊 ALERTA
+    // 🚨 ALERTA CONTROLADO
     if(alertaCritico){
+
       document.getElementById("alerta").innerText = "🚨 ESCALADA CRÍTICA IMEDIATA";
       document.getElementById("alerta").style.color = "red";
 
-      tocarAlarme();
+      if(!alertaJaDisparado){
+        tocarAlarme();
+        alertaJaDisparado = true;
+      }
+
+    } else {
+      alertaJaDisparado = false;
     }
 
     // 📡 EVENTOS
