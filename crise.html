@@ -12,40 +12,27 @@ body {
   color:#fff;
   display:grid;
   grid-template-columns: 20% 60% 20%;
-  grid-template-rows: 80px auto 80px;
+  grid-template-rows: 120px auto 80px;
   height:100vh;
 }
 
-/* TOPO */
 .header {
   grid-column:1 / 4;
   background:#111;
   padding:10px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
 }
 
-/* ESQUERDA */
-.left {
-  background:#1a1a1a;
-  padding:10px;
-  overflow:auto;
+/* filtros */
+.filtros input, .filtros select, .filtros button {
+  padding:8px;
+  margin:3px;
 }
 
-/* CENTRO */
-.center {
-  padding:15px;
-  overflow:auto;
-}
+/* layout */
+.left { background:#1a1a1a; padding:10px; overflow:auto; }
+.center { padding:15px; overflow:auto; }
+.right { background:#1a1a1a; padding:10px; }
 
-/* DIREITA */
-.right {
-  background:#1a1a1a;
-  padding:10px;
-}
-
-/* RODAPÉ */
 .footer {
   grid-column:1 / 4;
   background:#000;
@@ -53,18 +40,15 @@ body {
   padding:10px;
 }
 
-/* EVENTOS */
 .evento {
   padding:10px;
   border-bottom:1px solid #333;
 }
 
-/* ODÔMETRO */
 .gauge {
   height:25px;
   background:linear-gradient(to right, red, yellow, green);
   position:relative;
-  margin-top:10px;
 }
 
 .pointer {
@@ -75,70 +59,122 @@ body {
   top:-5px;
 }
 </style>
-
 </head>
 
 <body>
 
-<!-- TOPO -->
+<!-- TOPO COM FILTROS -->
 <div class="header">
-  <div>
-    <b>ID:</b> <span id="id"></span> |
-    <b>Unidade:</b> <span id="unidade"></span>
-  </div>
 
-  <div>
-    <b>Início:</b> <span id="inicio"></span>
-  </div>
+<div class="filtros">
 
-  <div>
-    <b>Status:</b> <span id="status">---</span>
-  </div>
+<b>ID direto:</b>
+<input id="inputId" placeholder="Digite o ID">
+<button onclick="carregarPorId()">Abrir</button>
+
+<br>
+
+<b>Filtrar por data:</b>
+<input type="date" id="filtroData">
+<button onclick="buscarPorData()">Buscar</button>
+
+<select id="listaIncidentes"></select>
+<button onclick="selecionarLista()">Abrir selecionado</button>
+
+</div>
+
+<hr>
+
+<div>
+<b>ID:</b> <span id="id"></span> |
+<b>Unidade:</b> <span id="unidade"></span> |
+<b>Início:</b> <span id="inicio"></span> |
+<b>Status:</b> <span id="status">---</span>
+</div>
+
 </div>
 
 <!-- ESQUERDA -->
 <div class="left">
-  <h3>🟢 Proteção</h3>
-  <div id="protecao"></div>
+<h3>🟢 Proteção</h3>
+<div id="protecao"></div>
 
-  <h3>🔴 Risco</h3>
-  <div id="risco"></div>
+<h3>🔴 Risco</h3>
+<div id="risco"></div>
 </div>
 
 <!-- CENTRO -->
 <div class="center">
-  <h2>📡 Linha do Tempo</h2>
-  <div id="eventos"></div>
+<h2>📡 Eventos</h2>
+<div id="eventos"></div>
 </div>
 
 <!-- DIREITA -->
 <div class="right">
-  <h3>🧠 Análise</h3>
+<h3>🧠 Análise</h3>
 
-  <div id="ultimo"></div>
+<div id="ultimo"></div>
 
-  <div class="gauge">
-    <div id="ponteiro" class="pointer" style="left:50%"></div>
-  </div>
+<div class="gauge">
+<div id="ponteiro" class="pointer" style="left:50%"></div>
+</div>
 
-  <h4 id="tendencia"></h4>
+<h4 id="tendencia"></h4>
 </div>
 
 <!-- RODAPÉ -->
 <div class="footer">
-  <span id="alerta"></span>
+<span id="alerta"></span>
 </div>
 
 <script>
 
-// 🔐 COLE AQUI SEU LINK /exec
 const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+let idAtual = "";
 
-// 🔎 pegar ID pela URL
-const params = new URLSearchParams(window.location.search);
-let idAtual = params.get("id");
+// 🔎 abrir por ID digitado
+function carregarPorId(){
+  let id = document.getElementById("inputId").value;
+  if(!id){ alert("Informe o ID"); return; }
+  idAtual = id;
+  carregarTudo();
+}
 
-// 📋 CARREGAR CABEÇALHO
+// 🔎 buscar por data
+function buscarPorData(){
+
+  let data = document.getElementById("filtroData").value;
+
+  fetch(API + "?tipo=incidentes")
+  .then(r=>r.json())
+  .then(lista=>{
+
+    let select = document.getElementById("listaIncidentes");
+    select.innerHTML = "";
+
+    lista.forEach(item=>{
+
+      if(data && !item.inicio.includes(data)) return;
+
+      let opt = document.createElement("option");
+      opt.value = item.id;
+      opt.text = item.id + " | " + item.ocorrencia + " | " + item.unidade;
+
+      select.appendChild(opt);
+    });
+
+  });
+}
+
+// 🔎 selecionar da lista
+function selecionarLista(){
+  let id = document.getElementById("listaIncidentes").value;
+  if(!id){ alert("Selecione um incidente"); return; }
+  idAtual = id;
+  carregarTudo();
+}
+
+// 📋 cabeçalho
 function carregarCabecalho(){
 
   fetch(API + "?tipo=incidentes")
@@ -153,12 +189,8 @@ function carregarCabecalho(){
         document.getElementById("inicio").innerText = item.inicio;
         document.getElementById("unidade").innerText = item.unidade;
 
-        // status
-        if(item.fim){
-          document.getElementById("status").innerText = "FINALIZADO";
-        } else {
-          document.getElementById("status").innerText = "EM ANDAMENTO";
-        }
+        document.getElementById("status").innerText =
+          item.fim ? "FINALIZADO" : "EM ANDAMENTO";
 
       }
 
@@ -167,7 +199,7 @@ function carregarCabecalho(){
   });
 }
 
-// 📊 ATUALIZAR EVENTOS
+// 📊 eventos
 function atualizar(){
 
   fetch(API + "?tipo=eventos&id=" + idAtual)
@@ -188,48 +220,31 @@ function atualizar(){
       if(e.positivos) protecao.add(e.positivos);
       if(e.negativos) risco.add(e.negativos);
 
-      if(e.progresso){
-        score++;
-        ultimo = "🟢 " + e.progresso;
-      }
+      if(e.progresso){ score++; ultimo = "🟢 " + e.progresso; }
+      if(e.violencia){ score--; ultimo = "🔴 " + e.violencia; }
 
-      if(e.violencia){
-        score--;
-        ultimo = "🔴 " + e.violencia;
-      }
-
-      eventosDiv.innerHTML += `
-        <div class="evento">${e.descricao}</div>
-      `;
-
+      eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
     });
 
-    // lateral
     document.getElementById("protecao").innerHTML =
       [...protecao].join("<br>");
 
     document.getElementById("risco").innerHTML =
       [...risco].join("<br>");
 
-    // último indicador
     document.getElementById("ultimo").innerText = ultimo;
 
-    // odômetro
     let pos = 50 + (score * 5);
     pos = Math.max(0, Math.min(100, pos));
     document.getElementById("ponteiro").style.left = pos + "%";
 
-    // tendência
     let tendencia = "ESTÁVEL";
-
     if(score > 2) tendencia = "PROGRESSO";
     if(score < -2) tendencia = "RISCO ELEVADO";
 
     document.getElementById("tendencia").innerText = tendencia;
 
-    // alerta
     let alerta = "";
-
     if(score < -3) alerta = "🚨 ESCALADA CRÍTICA";
     if(score > 3) alerta = "🟢 EVOLUÇÃO POSITIVA";
 
@@ -238,16 +253,12 @@ function atualizar(){
   });
 }
 
-// 🔄 atualização contínua
-setInterval(atualizar, 3000);
-
-// 🚀 inicialização
-if(idAtual){
+function carregarTudo(){
   carregarCabecalho();
   atualizar();
-} else {
-  alert("Abra com ?id=XXXX");
 }
+
+setInterval(()=>{ if(idAtual) atualizar(); }, 3000);
 
 </script>
 
