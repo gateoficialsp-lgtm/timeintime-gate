@@ -22,10 +22,9 @@ label { display:block; margin-top:10px; }
 
 <h2>🪖 TIME IN TIME</h2>
 
-<!-- INICIAR -->
 <h3>📋 Iniciar Incidente</h3>
 
-<input id="local" placeholder="Capturando localização..." readonly>
+<input id="local" readonly>
 
 <select id="ocorrencia">
   <option value="">Selecione ocorrência</option>
@@ -33,74 +32,47 @@ label { display:block; margin-top:10px; }
   <option value="REF">REF - Ocorrência com Refém</option>
   <option value="CRE">CRE - Criminoso Embarricado</option>
   <option value="MAR">MAR - Mandado de alto risco</option>
-  <option value="CRH">CRH - Criminoso homiziado</option>
-  <option value="CES">CES - Criminoso embarricado com propósito suicida</option>
-  <option value="PPT">PPT - Pessoa com propósito suicida com terceiro em risco</option>
-  <option value="PEE">PEE - Pessoa embarricada</option>
-  <option value="PES">PES - Pessoa em surto (embarricada ou não)</option>
-  <option value="OUT">OUT - Outros</option>  
 </select>
 
-<input id="unidade" placeholder="Unidade (ex: 4º BPChq, 9º BPM/M)">
-
+<input id="unidade" placeholder="Unidade">
 <input id="responsavel" placeholder="Responsável">
 
 <button id="btnIniciar" onclick="iniciar()">Iniciar</button>
 
 <hr>
 
-<!-- EVENTOS -->
 <h3>⏱️ Eventos</h3>
 
-<input id="id" placeholder="ID do incidente">
+<input id="id">
 
-<textarea id="descricao" placeholder="Descrição detalhada"></textarea>
+<textarea id="descricao"></textarea>
 
 <select id="emc">
-  <option value="">EMC (opcional)</option>
+  <option value="">EMC</option>
   <option value="01">Escuta Ativa</option>
   <option value="02">Empatia</option>
-  <option value="03">Rapport</option>
-  <option value="04">Influência</option>
-  <option value="05">Mudança</option>
 </select>
 
-<label>
-  <input type="checkbox" id="negociacao" checked>
-  Negociação Real
-</label>
-
-<label>
-  <input type="checkbox" id="pausa">
-  Pausa estratégica
-</label>
+<label><input type="checkbox" id="negociacao" checked> Negociação Real</label>
+<label><input type="checkbox" id="pausa"> Pausa estratégica</label>
 
 <select id="indicadorProgresso">
   <option value="">Indicador de Progresso</option>
-  <option>Tom de voz mais baixo e aberto ao diálogo</option>
-  <option>Comportamento mais ameno</option>
-  <option>Não agride nem atira</option>
   <option>Ouve conselhos</option>
-  <option>Vínculo com negociador</option>
 </select>
 
 <select id="indicadorViolencia">
   <option value="">Indicador de Violência</option>
-  <option>Tom de voz alto e imperativo</option>
-  <option>Comportamento agressivo</option>
   <option>Agride ou atira</option>
-  <option>Ameaça se matar</option>
-  <option>Mata reféns</option>
 </select>
 
-<textarea id="pos" placeholder="Fatores de proteção"></textarea>
-<textarea id="neg" placeholder="Fatores de risco"></textarea>
+<textarea id="pos"></textarea>
+<textarea id="neg"></textarea>
 
 <button onclick="registrar()">Registrar Evento</button>
 
 <hr>
 
-<!-- FINALIZAR -->
 <h3>🏁 Finalizar</h3>
 
 <input id="idFinalizar">
@@ -110,88 +82,30 @@ label { display:block; margin-top:10px; }
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+const API_URL = "SEU_LINK_AQUI";
 
 let lat="", lng="", incidenteId="";
 
-// 📍 GPS
 navigator.geolocation.getCurrentPosition(
-  function(pos){
+  pos=>{
     lat = pos.coords.latitude;
     lng = pos.coords.longitude;
-
     document.getElementById("local").value =
-      lat.toFixed(6) + ", " + lng.toFixed(6);
-  },
-  function(){
-    document.getElementById("local").value = "Localização indisponível";
+      lat.toFixed(6)+", "+lng.toFixed(6);
   }
 );
 
-// 🧠 FUNÇÃO CENTRAL (ONLINE / OFFLINE)
 function enviarOuSalvar(dados){
 
-  if(navigator.onLine){
-
-    fetch(API_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify(dados)
-    })
-    .catch(()=>{
-      salvarOffline(dados);
-    });
-
-  } else {
-    salvarOffline(dados);
-  }
-}
-
-// 💾 SALVAR LOCAL
-function salvarOffline(dados){
-
-  let fila = JSON.parse(localStorage.getItem("fila") || "[]");
-  fila.push(dados);
-  localStorage.setItem("fila", JSON.stringify(fila));
-
-  document.getElementById("status").innerText = "📴 Salvo offline";
-}
-
-// 🔄 SINCRONIZAR
-function sincronizar(){
-
-  let fila = JSON.parse(localStorage.getItem("fila") || "[]");
-
-  if(fila.length === 0) return;
-
-  fila.forEach(dados=>{
-    fetch(API_URL, {
-      method:"POST",
-      headers:{ "Content-Type":"text/plain;charset=utf-8" },
-      body: JSON.stringify(dados)
-    });
+  fetch(API_URL,{
+    method:"POST",
+    headers:{ "Content-Type":"text/plain;charset=utf-8" },
+    body:JSON.stringify(dados)
   });
 
-  localStorage.removeItem("fila");
-
-  document.getElementById("status").innerText = "☁️ Dados sincronizados";
 }
 
-// 🔄 evento de reconexão
-window.addEventListener("online", sincronizar);
-
-// 🚀 INICIAR
 function iniciar(){
-
-  let local = document.getElementById("local").value;
-  let ocorrencia = document.getElementById("ocorrencia").value;
-  let responsavel = document.getElementById("responsavel").value;
-  let unidade = document.getElementById("unidade").value;
-
-  if(!local || !ocorrencia || !responsavel || !unidade){
-    alert("Preencha todos os campos");
-    return;
-  }
 
   incidenteId = Date.now();
 
@@ -200,96 +114,47 @@ function iniciar(){
 
   enviarOuSalvar({
     tipo:"inicio",
-    id: incidenteId,
-    local: local,
-    ocorrencia: ocorrencia,
-    responsavel: responsavel,
-    unidade: unidade
+    id:incidenteId,
+    local:document.getElementById("local").value,
+    ocorrencia:document.getElementById("ocorrencia").value,
+    responsavel:document.getElementById("responsavel").value,
+    unidade:document.getElementById("unidade").value
   });
 
-  document.getElementById("status").innerText = "Incidente iniciado";
+  document.getElementById("status").innerText="Incidente iniciado";
 }
 
-// 📝 REGISTRAR
 function registrar(){
-
-  let idAtual = document.getElementById("id").value;
-
-  if(!idAtual){
-    alert("Informe o ID");
-    return;
-  }
 
   enviarOuSalvar({
     tipo:"evento",
-    id: idAtual,
-    descricao: document.getElementById("descricao").value,
-    emc: document.getElementById("emc").value,
-    negociacao: document.getElementById("negociacao").checked,
-    pausa: document.getElementById("pausa").checked,
-    progresso: document.getElementById("indicadorProgresso").value,
-    violencia: document.getElementById("indicadorViolencia").value,
-    positivos: document.getElementById("pos").value,
-    negativos: document.getElementById("neg").value,
-    latitude: lat,
-    longitude: lng
+    id:document.getElementById("id").value,
+    descricao:document.getElementById("descricao").value,
+    emc:document.getElementById("emc").value,
+    negociacao:document.getElementById("negociacao").checked,
+    pausa:document.getElementById("pausa").checked,
+    progresso:document.getElementById("indicadorProgresso").value,
+    violencia:document.getElementById("indicadorViolencia").value,
+    positivos:document.getElementById("pos").value,
+    negativos:document.getElementById("neg").value,
+    latitude:lat,
+    longitude:lng
   });
 
-  // limpeza
   document.getElementById("descricao").value="";
-  document.getElementById("pos").value="";
-  document.getElementById("neg").value="";
-  document.getElementById("emc").value="";
-  document.getElementById("indicadorProgresso").selectedIndex=0;
-  document.getElementById("indicadorViolencia").selectedIndex=0;
-
-  document.getElementById("status").innerText = "✅ Evento registrado";
+  document.getElementById("status").innerText="Evento registrado";
 }
 
-// 🏁 FINALIZAR
 function finalizar(){
 
   let idAtual = document.getElementById("idFinalizar").value;
 
-  if(!idAtual){
-    alert("Informe o ID do incidente");
-    return;
-  }
-
   enviarOuSalvar({
     tipo:"fim",
-    id: idAtual
+    id:idAtual
   });
 
-  // reset
-  incidenteId = "";
-
-  document.getElementById("local").value="";
-  document.getElementById("ocorrencia").value="";
-  document.getElementById("unidade").value="";
-  document.getElementById("responsavel").value="";
-  document.getElementById("id").value="";
-  document.getElementById("idFinalizar").value="";
-  document.getElementById("descricao").value="";
-  document.getElementById("emc").value="";
-  document.getElementById("pos").value="";
-  document.getElementById("neg").value="";
-  document.getElementById("indicadorProgresso").value="";
-  document.getElementById("indicadorViolencia").value="";
-  document.getElementById("negociacao").checked=true;
-  document.getElementById("pausa").checked=false;
-
-  navigator.geolocation.getCurrentPosition(function(pos){
-    lat = pos.coords.latitude;
-    lng = pos.coords.longitude;
-    document.getElementById("local").value =
-      lat.toFixed(6) + ", " + lng.toFixed(6);
-  });
-
-  document.getElementById("status").innerText =
-    "✅ Sistema pronto para novo incidente";
-  // 📄 BAIXAR RELATÓRIO
-  window.open(API_URL + "?relatorio=" + idAtual, "_blank");
+  document.getElementById("status").innerText="Finalizado";
 }
 
 </script>
