@@ -12,7 +12,7 @@ body {
   color:#fff;
   display:grid;
   grid-template-columns: 15% 70% 15%;
-  grid-template-rows: 140px auto 80px;
+  grid-template-rows: 150px auto 80px;
   height:100vh;
 }
 
@@ -35,11 +35,24 @@ body {
 
 <div class="header">
 
-<b>ID:</b>
-<input id="inputId">
+<div>
+<b>ID direto:</b>
+<input id="inputId" placeholder="Digite o ID">
 <button onclick="carregarPorId()">Abrir</button>
 
 <button onclick="gerarPDF()">📄 Relatório</button>
+</div>
+
+<br>
+
+<div>
+<b>Filtrar por data:</b>
+<input type="date" id="filtroData">
+<button onclick="buscarPorData()">Buscar</button>
+
+<select id="listaIncidentes"></select>
+<button onclick="selecionarLista()">Abrir selecionado</button>
+</div>
 
 <hr>
 
@@ -87,13 +100,14 @@ body {
 
 <script>
 
-const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+const API = "COLE_AQUI_SEU_LINK_EXEC";
 
 let idAtual = "";
 let estadoCriticoAnterior = false;
 let alarmeSilenciado = false;
 let alarmeAtivo = false;
 
+// 🔊 ÁUDIO
 function tocarAlarme(){
   if(alarmeSilenciado || alarmeAtivo) return;
 
@@ -113,19 +127,76 @@ function pararAlarme(){
   alarmeAtivo = false;
 }
 
+// 📄 PDF
 function gerarPDF(){
   if(!idAtual){
     alert("Selecione um incidente");
     return;
   }
-
   window.open(API + "?relatorio=" + idAtual, "_blank");
 }
 
+// 🔎 POR ID
 function carregarPorId(){
   idAtual = document.getElementById("inputId").value;
+  carregarCabecalho();
 }
 
+// 🔎 POR DATA
+function buscarPorData(){
+
+  let data = document.getElementById("filtroData").value;
+
+  fetch(API + "?tipo=incidentes")
+  .then(r=>r.json())
+  .then(lista=>{
+
+    let select = document.getElementById("listaIncidentes");
+    select.innerHTML = "";
+
+    lista.forEach(item=>{
+
+      if(data && !item.inicio.includes(data)) return;
+
+      let opt = document.createElement("option");
+      opt.value = item.id;
+      opt.text = item.id + " | " + item.ocorrencia + " | " + item.unidade;
+
+      select.appendChild(opt);
+    });
+
+  });
+}
+
+// 🔎 SELECIONAR LISTA
+function selecionarLista(){
+  idAtual = document.getElementById("listaIncidentes").value;
+  carregarCabecalho();
+}
+
+// 📋 CABEÇALHO
+function carregarCabecalho(){
+
+  fetch(API + "?tipo=incidentes")
+  .then(r=>r.json())
+  .then(lista=>{
+
+    lista.forEach(item=>{
+
+      if(item.id == idAtual){
+
+        document.getElementById("id").innerText = item.id;
+        document.getElementById("unidade").innerText = item.unidade;
+        document.getElementById("status").innerText =
+          item.fim ? "FINALIZADO" : "EM ANDAMENTO";
+      }
+
+    });
+
+  });
+}
+
+// 📊 ATUALIZAÇÃO
 function atualizar(){
 
   fetch(API + "?tipo=eventos&id=" + idAtual)
@@ -155,7 +226,7 @@ function atualizar(){
 
     });
 
-    // 🔥 DISPARO POR MUDANÇA
+    // 🔥 EDGE TRIGGER (sem loop)
     if(alertaCritico && !estadoCriticoAnterior){
       tocarAlarme();
     }
@@ -178,6 +249,7 @@ function atualizar(){
   });
 }
 
+// 🔁 LOOP
 setInterval(()=>{ if(idAtual) atualizar(); }, 3000);
 
 </script>
