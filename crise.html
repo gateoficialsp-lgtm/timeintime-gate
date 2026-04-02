@@ -207,9 +207,12 @@ function carregarCabecalho(){
 
 // ligar ou desligar o alarme  
 let audioAlarme;
+let alarmeSilenciado = false;
 
 function tocarAlarme(){
 
+  if(alarmeSilenciado) return; // 🔥 trava o retorno
+  
   if(!audioAlarme){
     audioAlarme = new Audio("https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg");
     audioAlarme.loop = true;
@@ -219,6 +222,8 @@ function tocarAlarme(){
 }
 
 function pararAlarme(){
+
+  alarmeSilenciado = true; // 🔥 trava o sistema  
   if(audioAlarme){
     audioAlarme.pause();
     audioAlarme.currentTime = 0;
@@ -278,7 +283,10 @@ function atualizar(){
   else{
     recomendacao = "🟡 ESTABILIZAR / ESCUTA ATIVA";
   }
-
+  // reset automático do alarme
+    if(score > -2){
+    alarmeSilenciado = false;
+  }
   // aplicar
   document.getElementById("recomendacao").innerText = recomendacao;
 
