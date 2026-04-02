@@ -16,32 +16,14 @@ body {
   height:120vh;
 }
 
-.header {
-  grid-column:1 / 4;
-  background:#111;
-  padding:10px;
-}
-
-.filtros input, .filtros select, .filtros button {
-  padding:8px;
-  margin:3px;
-}
-
+.header { grid-column:1 / 4; background:#111; padding:10px; }
+.filtros input, .filtros select, .filtros button { padding:8px; margin:3px; }
 .left { background:#1a1a1a; padding:10px; overflow:auto; }
 .center { padding:15px; overflow:auto; }
 .right { background:#1a1a1a; padding:10px; }
+.footer { grid-column:1 / 4; background:#000; text-align:center; padding:10px; }
 
-.footer {
-  grid-column:1 / 4;
-  background:#000;
-  text-align:center;
-  padding:10px;
-}
-
-.evento {
-  padding:10px;
-  border-bottom:1px solid #333;
-}
+.evento { padding:10px; border-bottom:1px solid #333; }
 
 .gauge {
   height:25px;
@@ -61,23 +43,20 @@ body {
 
 <body>
 
-<!-- HEADER -->
 <div class="header">
-
 <div class="filtros">
 
-<b>ID direto:</b>
-<input id="inputId" placeholder="Digite o ID">
+<b>ID:</b>
+<input id="inputId">
 <button onclick="carregarPorId()">Abrir</button>
 
 <br>
 
-<b>Filtrar por data:</b>
 <input type="date" id="filtroData">
 <button onclick="buscarPorData()">Buscar</button>
 
 <select id="listaIncidentes"></select>
-<button onclick="selecionarLista()">Abrir selecionado</button>
+<button onclick="selecionarLista()">Abrir</button>
 
 </div>
 
@@ -87,50 +66,40 @@ body {
 <b>ID:</b> <span id="id"></span> |
 <b>Unidade:</b> <span id="unidade"></span> |
 <b>Início:</b> <span id="inicio"></span> |
-<b>Status:</b> <span id="status">---</span>
+<b>Status:</b> <span id="status"></span>
+</div>
 </div>
 
-</div>
-
-<!-- LATERAL -->
 <div class="left">
 <h3>🟢 Proteção</h3>
 <div id="protecao"></div>
-
 <h3>🔴 Risco</h3>
 <div id="risco"></div>
 </div>
 
-<!-- CENTRO -->
 <div class="center">
 <h2>📡 Eventos</h2>
 <div id="eventos"></div>
 </div>
 
-<!-- DIREITA -->
 <div class="right">
 <h3>🧠 Análise</h3>
 
 <div id="ultimo"></div>
-<div id="recomendacao" style="margin-top:10px; font-weight:bold;"></div>
 
 <div class="gauge">
-<div id="ponteiro" class="pointer" style="left:50%"></div>
+<div id="ponteiro" class="pointer"></div>
 </div>
 
-<button onclick="pararAlarme()" style="margin-top:10px;">
-🔇 Silenciar Alarme
-</button>
+<button onclick="pararAlarme()">🔇 Silenciar</button>
 
 <h4 id="tendencia"></h4>
 </div>
 
-<!-- RODAPÉ -->
 <div class="footer">
 <span id="alerta"></span>
 </div>
 
-<!-- 🔊 ÁUDIO FIXO (NÃO RECRIA) -->
 <audio id="alarmeAudio" loop>
   <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg">
 </audio>
@@ -138,14 +107,15 @@ body {
 <script>
 
 const API = "https://script.google.com/macros/s/AKfycbwsuihkPbsPQr_-ZDrBUkBhtVIJDAdIJ3FEkz5gEK_54Y06DtYhijC6moje6zD2HR-u/exec";
+
 let idAtual = "";
 
-// 🔊 CONTROLE DEFINITIVO
-let alarmeAtivo = false;
-let alarmeSilenciado = false;
-let alertaJaDisparado = false;
+// 🔥 CONTROLE POR TRANSIÇÃO
+let estadoCriticoAnterior = false;
 
-// 🔊 TOCAR
+let alarmeSilenciado = false;
+let alarmeAtivo = false;
+
 function tocarAlarme(){
 
   if(alarmeSilenciado) return;
@@ -159,7 +129,6 @@ function tocarAlarme(){
   alarmeAtivo = true;
 }
 
-// 🔇 PARAR
 function pararAlarme(){
 
   let audio = document.getElementById("alarmeAudio");
@@ -173,9 +142,7 @@ function pararAlarme(){
 
 // 🔎 ID
 function carregarPorId(){
-  let id = document.getElementById("inputId").value;
-  if(!id){ alert("Informe o ID"); return; }
-  idAtual = id;
+  idAtual = document.getElementById("inputId").value;
   carregarTudo();
 }
 
@@ -196,7 +163,7 @@ function buscarPorData(){
 
       let opt = document.createElement("option");
       opt.value = item.id;
-      opt.text = item.id + " | " + item.ocorrencia + " | " + item.unidade;
+      opt.text = item.id + " | " + item.ocorrencia;
 
       select.appendChild(opt);
     });
@@ -204,52 +171,39 @@ function buscarPorData(){
   });
 }
 
-// 🔎 LISTA
 function selecionarLista(){
-  let id = document.getElementById("listaIncidentes").value;
-  if(!id){ alert("Selecione um incidente"); return; }
-  idAtual = id;
+  idAtual = document.getElementById("listaIncidentes").value;
   carregarTudo();
 }
 
-// 📋 CABEÇALHO
 function carregarCabecalho(){
 
   fetch(API + "?tipo=incidentes")
   .then(r=>r.json())
   .then(lista=>{
-
     lista.forEach(item=>{
       if(item.id == idAtual){
-
         document.getElementById("id").innerText = item.id;
         document.getElementById("inicio").innerText = item.inicio;
         document.getElementById("unidade").innerText = item.unidade;
-
-        document.getElementById("status").innerText =
-          item.fim ? "FINALIZADO" : "EM ANDAMENTO";
+        document.getElementById("status").innerText = item.fim ? "FINALIZADO" : "EM ANDAMENTO";
       }
     });
-
   });
 }
 
-// 📊 ATUALIZAÇÃO
 function atualizar(){
 
   fetch(API + "?tipo=eventos&id=" + idAtual)
   .then(r=>r.json())
   .then(lista=>{
 
-    let eventosDiv = document.getElementById("eventos");
-    eventosDiv.innerHTML = "";
+    let alertaCritico = false;
+    let score = 0;
+    let ultimo = "";
 
     let protecao = new Set();
     let risco = new Set();
-
-    let score = 0;
-    let ultimo = "";
-    let alertaCritico = false;
 
     lista.forEach(e=>{
 
@@ -260,40 +214,24 @@ function atualizar(){
         alertaCritico = true;
       }
 
-      if(e.progresso){
-        score++;
-        ultimo = "🟢 " + e.progresso;
-      }
-
-      if(e.violencia){
-        score--;
-        ultimo = "🔴 " + e.violencia;
-      }
+      if(e.progresso){ score++; ultimo = e.progresso; }
+      if(e.violencia){ score--; ultimo = e.violencia; }
     });
 
-    // 🔄 RESET (quando melhora)
-    if(score > -2){
-      alarmeAtivo = false;
-      alarmeSilenciado = false;
-      alertaJaDisparado = false;
+    // 🔥 EDGE TRIGGER (SOLUÇÃO FINAL)
+    if(alertaCritico && !estadoCriticoAnterior){
+      tocarAlarme();
     }
 
-    // 🚨 ALERTA CONTROLADO
-    if(alertaCritico){
+    estadoCriticoAnterior = alertaCritico;
 
-      document.getElementById("alerta").innerText = "🚨 ESCALADA CRÍTICA IMEDIATA";
-      document.getElementById("alerta").style.color = "red";
+    document.getElementById("alerta").innerText =
+      alertaCritico ? "🚨 ESCALADA CRÍTICA" : "";
 
-      if(!alertaJaDisparado){
-        tocarAlarme();
-        alertaJaDisparado = true;
-      }
+    // UI
+    let eventosDiv = document.getElementById("eventos");
+    eventosDiv.innerHTML = "";
 
-    } else {
-      alertaJaDisparado = false;
-    }
-
-    // 📡 EVENTOS
     lista.slice().reverse().forEach(e=>{
       eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
     });
@@ -302,15 +240,8 @@ function atualizar(){
     document.getElementById("risco").innerHTML = [...risco].join("<br>");
     document.getElementById("ultimo").innerText = ultimo;
 
-    let pos = 50 + (score * 5);
-    pos = Math.max(0, Math.min(100, pos));
-    document.getElementById("ponteiro").style.left = pos + "%";
-
-    let tendencia = "ESTÁVEL";
-    if(score > 2) tendencia = "PROGRESSO";
-    if(score < -2) tendencia = "RISCO ELEVADO";
-
-    document.getElementById("tendencia").innerText = tendencia;
+    let pos = 50 + score*5;
+    document.getElementById("ponteiro").style.left = pos+"%";
 
   });
 }
