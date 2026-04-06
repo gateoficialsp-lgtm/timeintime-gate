@@ -78,9 +78,15 @@ body {
 <div class="right">
 <h3>🧠 Análise</h3>
 
+<div id="ultimo" style="margin-bottom:10px; font-weight:bold;"></div>
+
+<div id="recomendacao" style="margin-bottom:10px;"></div>
+
 <div class="gauge">
 <div id="ponteiro" class="pointer"></div>
 </div>
+
+<h4 id="tendencia"></h4>
 
 <button onclick="pararAlarme()">🔇 Silenciar</button>
 </div>
@@ -196,31 +202,53 @@ function atualizar(){
   .then(r=>r.json())
   .then(lista=>{
 
-    let alertaCritico = false;
-    let score = 0;
+  let alertaCritico = false;
+  let score = 0;
 
-    let eventosDiv = document.getElementById("eventos");
-    eventosDiv.innerHTML = "";
+  let ultimo = "";
+  let recomendacao = "";
 
-    lista.forEach(e=>{
+  let eventosDiv = document.getElementById("eventos");
+  eventosDiv.innerHTML = "";
 
-      if(e.violencia === "Agride ou atira" || e.violencia === "Mata reféns"){
-        alertaCritico = true;
-      }
+  lista.forEach(e=>{
 
-      if(e.progresso) score++;
-      if(e.violencia) score--;
-    });
-
-    if(alertaCritico && !estadoCriticoAnterior){
-      tocarAlarme();
+    if(e.violencia === "Agride e atira ao mesmo tempo" || e.violencia === "Mata reféns"){
+      alertaCritico = true;
     }
 
-    estadoCriticoAnterior = alertaCritico;
+    if(e.progresso){
+      score++;
+      ultimo = "🟢 " + e.progresso;
+    }
 
-    document.getElementById("alerta").innerText =
-      alertaCritico ? "🚨 ESCALADA CRÍTICA" : "";
+    if(e.violencia){
+      score--;
+      ultimo = "🔴 " + e.violencia;
+    }
 
+  });
+
+  // 🔥 RECOMENDAÇÃO AUTOMÁTICA
+  if(score <= -3){
+    recomendacao = "⚠️ Alta tensão — priorizar técnicas de estabilização";
+  } else if(score >= 3){
+    recomendacao = "✅ Evolução positiva — avançar negociação";
+  } else {
+    recomendacao = "🟡 Situação controlada — manter estratégia";
+  }
+
+  // 🚨 ALERTA
+  if(alertaCritico && !estadoCriticoAnterior){
+    tocarAlarme();
+  }
+
+  estadoCriticoAnterior = alertaCritico;
+
+  document.getElementById("alerta").innerText =
+    alertaCritico ? "🚨 ESCALADA CRÍTICA" : "";
+
+  // 📡 EVENTOS
   lista.slice().reverse().forEach(e=>{
 
     let data = new Date(e.data);
@@ -237,11 +265,22 @@ function atualizar(){
     `;
   });
 
-    let pos = 50 + score*5;
-    document.getElementById("ponteiro").style.left = pos+"%";
+  // 🎯 ATUALIZA PAINEL DIREITO
+  document.getElementById("ultimo").innerText = ultimo;
+  document.getElementById("recomendacao").innerText = recomendacao;
 
-  });
-}
+  let pos = 50 + score*5;
+  pos = Math.max(0, Math.min(100, pos));
+  document.getElementById("ponteiro").style.left = pos+"%";
+
+  // 📊 TENDÊNCIA
+  let tendencia = "ESTÁVEL";
+  if(score > 2) tendencia = "PROGRESSO";
+  if(score < -2) tendencia = "RISCO ELEVADO";
+
+  document.getElementById("tendencia").innerText = tendencia;
+
+});
 
 setInterval(()=>{ if(idAtual) atualizar(); }, 3000);
 
