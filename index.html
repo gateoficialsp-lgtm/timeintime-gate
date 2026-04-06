@@ -168,8 +168,19 @@ function registrar(){
     longitude:lng
   });
 
-  document.getElementById("descricao").value="";
-  document.getElementById("status").innerText="Evento registrado";
+   // 🔥 LIMPEZA COMPLETA (MENOS ID)
+  document.getElementById("descricao").value = "";
+  document.getElementById("emc").value = "";
+  document.getElementById("indicadorProgresso").value = "";
+  document.getElementById("indicadorViolencia").value = "";
+  document.getElementById("pos").value = "";
+  document.getElementById("neg").value = "";
+
+  // 🔁 RESET CHECKBOXES
+  document.getElementById("negociacao").checked = true; // padrão
+  document.getElementById("pausa").checked = false;
+
+  document.getElementById("status").innerText = "Evento registrado";
 }
 
 function finalizar(){
