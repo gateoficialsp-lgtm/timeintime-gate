@@ -221,9 +221,21 @@ function atualizar(){
     document.getElementById("alerta").innerText =
       alertaCritico ? "🚨 ESCALADA CRÍTICA" : "";
 
-    lista.slice().reverse().forEach(e=>{
-      eventosDiv.innerHTML += `<div class="evento">${e.descricao}</div>`;
-    });
+  lista.slice().reverse().forEach(e=>{
+
+    let data = new Date(e.data);
+
+    let hora =
+      data.getHours().toString().padStart(2,"0") + ":" +
+      data.getMinutes().toString().padStart(2,"0");
+
+    eventosDiv.innerHTML += `
+      <div class="evento">
+        <span style="color:#00e5ff; font-weight:bold;">${hora}</span>
+        — ${e.descricao}
+      </div>
+    `;
+  });
 
     let pos = 50 + score*5;
     document.getElementById("ponteiro").style.left = pos+"%";
