@@ -18,8 +18,7 @@ label { display:block; margin-top:10px; }
 </style>
 </head>
 
-<body>
-
+<body>ou
 <h2>🪖 TIME IN TIME</h2>
 
 <h3>📋 Iniciar Incidente</h3>
@@ -31,7 +30,13 @@ label { display:block; margin-top:10px; }
   <option value="PPS">PPS - Pessoa armada com Propósito Suicida</option>
   <option value="REF">REF - Ocorrência com Refém</option>
   <option value="CRE">CRE - Criminoso Embarricado</option>
+  <option value="CRS">CRS - Criminoso Embarricado com propósito suicida</option>
+  <option value="CRH">CRH - Criminoso homiziado</option>
+  <option value="PPT">PPT - Pessoa com Propósito Suicida com Terceiro em Risco</option>
+  <option value="PEM">PEM - Pessoa Embarricada</option>
+  <option value="PES">PES - Pessoa em Surto (Embarricada ou Não)</option>  
   <option value="MAR">MAR - Mandado de alto risco</option>
+  <option value="OUT">OUT - Outros</option>  
 </select>
 
 <input id="unidade" placeholder="Unidade">
@@ -51,6 +56,10 @@ label { display:block; margin-top:10px; }
   <option value="">EMC</option>
   <option value="01">Escuta Ativa</option>
   <option value="02">Empatia</option>
+  <option value="03">Rapport</option>
+  <option value="04">Influência</option>
+  <option value="05">Mudança de Comportamento</option>
+  
 </select>
 
 <label><input type="checkbox" id="negociacao" checked> Negociação Real</label>
@@ -58,12 +67,30 @@ label { display:block; margin-top:10px; }
 
 <select id="indicadorProgresso">
   <option value="">Indicador de Progresso</option>
-  <option>Ouve conselhos</option>
+  <option>Tom de voz mais baixo, linguagem mais passional e aberto ao diálogo</option>
+  <option>Comportamento mais ameno e sincero</option>
+  <option>Não agride nem atira</option>
+  <option>Passa prazo de exigências sem consequências</option>
+  <option>Ouve conselhos e sugestões</option>
+  <option>Discute tópicos fora do expediente</option>
+  <option>Afinidade com reféns</option>
+  <option>Vínculo com negociador</option>
+  <option>Não ameaça se matar</option>
+  <option>Não mata reféns</option>
 </select>
 
 <select id="indicadorViolencia">
   <option value="">Indicador de Violência</option>
-  <option>Agride ou atira</option>
+  <option>Tom de voz mais alto, linguagem emocional e imperativa</option>
+  <option>Comportamento mais agressivo e dissimulado</option>
+  <option>Agride e atira ao mesmo tempo</option>
+  <option>Cobra o cumprimento das exigências frequentemente</option>
+  <option>Não está aberto a reflexões</option>
+  <option>Só discute sobre fuga ou morte</option>
+  <option>Agressividade com reféns (desumaniza)</option>
+  <option>Sem vínculo com negociador</option>
+  <option>Ameaça se matar</option>
+  <option>Mata reféns</option>
 </select>
 
 <textarea id="pos"></textarea>
