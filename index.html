@@ -18,7 +18,7 @@ label { display:block; margin-top:10px; }
 </style>
 </head>
 
-<body>ou
+<body>
 <h2>🪖 TIME IN TIME</h2>
 
 <h3>📋 Iniciar Incidente</h3>
@@ -192,7 +192,26 @@ function finalizar(){
     id:idAtual
   });
 
-  document.getElementById("status").innerText="Finalizado";
+   // 🔥 LIMPA IDS
+  document.getElementById("id").value = "";
+  document.getElementById("idFinalizar").value = "";
+
+  // 🔁 LIMPA CAMPOS RESIDUAIS (SEGURANÇA)
+  document.getElementById("descricao").value = "";
+  document.getElementById("emc").value = "";
+  document.getElementById("indicadorProgresso").value = "";
+  document.getElementById("indicadorViolencia").value = "";
+  document.getElementById("pos").value = "";
+  document.getElementById("neg").value = "";
+
+  document.getElementById("negociacao").checked = true;
+  document.getElementById("pausa").checked = false;
+
+  // 🧾 STATUS
+  document.getElementById("status").innerText = "Incidente finalizado";
+
+  // 🔄 RESET DA VARIÁVEL GLOBAL (IMPORTANTE)
+  incidenteId = "";
 }
 
 </script>
