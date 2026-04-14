@@ -208,6 +208,9 @@ function atualizar(){
   let ultimo = "";
   let recomendacao = "";
 
+  let protecao = new Set();
+  let risco = new Set();
+
   let eventosDiv = document.getElementById("eventos");
   eventosDiv.innerHTML = "";
 
@@ -216,6 +219,9 @@ function atualizar(){
     if(e.violencia === "Agride e atira ao mesmo tempo" || e.violencia === "Mata reféns"){
       alertaCritico = true;
     }
+
+    if(e.positivos) protecao.add(e.positivos);
+    if(e.negativos) risco.add(e.negativos);
 
     if(e.progresso){
       score++;
@@ -228,6 +234,9 @@ function atualizar(){
     }
 
   });
+
+  document.getElementById("protecao").innerHTML = [...protecao].join("<br>");
+  document.getElementById("risco").innerHTML = [...risco].join("<br>");
 
   // 🔥 RECOMENDAÇÃO AUTOMÁTICA
   if(score <= -3){
